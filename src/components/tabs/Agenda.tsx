@@ -26,7 +26,11 @@ function getDiasSemana(offset: number) {
   const seg = new Date(now)
   seg.setDate(now.getDate() - diaSemana + offset * 7)
   seg.setHours(0,0,0,0)
-  return Array.from({ length: 7 }, (_, i) => { const d = new Date(seg); d.setDate(seg.getDate() + i); return d })
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(seg)
+    d.setDate(seg.getDate() + i)
+    return d
+  })
 }
 
 export function Agenda() {
@@ -49,10 +53,13 @@ export function Agenda() {
 
   function getSlotsOcupados(iso: string) {
     const ocupados = new Set<string>()
-    agendamentos.filter(a => String(a.data||'').trim() === iso || String(a.data||'').trim() === formatarDataBR(iso))
+    agendamentos
+      .filter(a => String(a.data||'').trim() === iso || String(a.data||'').trim() === formatarDataBR(iso))
       .forEach(ag => {
         const ini = slotParaMinutos(ag.hora)
-        for (let i = 0; i < Math.ceil(ag.duracao / SLOT_MIN); i++) ocupados.add(minutosParaSlot(ini + i * SLOT_MIN))
+        for (let i = 0; i < Math.ceil(ag.duracao / SLOT_MIN); i++) {
+          ocupados.add(minutosParaSlot(ini + i * SLOT_MIN))
+        }
       })
     return ocupados
   }
@@ -68,24 +75,36 @@ export function Agenda() {
   }
 
   async function confirmarAgendamento() {
-    if (!agClienteId || !agData || !agHora) { showToast('⚠️ Preencha todos os campos'); return }
+    if (!agClienteId || !agData || !agHora) {
+      showToast('⚠️ Preencha todos os campos')
+      return
+    }
     const svc = SERVICOS.find(s => s.id === agSvcId)
     const ag: Agendamento = {
-      id: gerarId(), clienteId: agClienteId, data: agData,
-      hora: agHora, duracao: TEMPO_SERVICO[agSvcId] || 60,
-      servico: svc?.nome || agSvcId, svcId: agSvcId, obs: agObs,
-      status: 'agendado', valorAcordado: agValorAcordado, criadoEm: hoje()
+      id: gerarId(),
+      clienteId: agClienteId,
+      data: agData,
+      hora: agHora,
+      duracao: TEMPO_SERVICO[agSvcId] || 60,
+      servico: svc?.nome || agSvcId,
+      svcId: agSvcId,
+      obs: agObs,
+      status: 'agendado',
+      valorAcordado: agValorAcordado,
+      criadoEm: hoje()
     }
-    const lista = [...agendamentos, ag]
-    setAgendamentos(lista)
+    setAgendamentos([...agendamentos, ag])
     setModalAg(false)
     const r = await apiCall('salvarAgendamento', { agendamento: ag })
     showToast(r.ok ? '📅 Agendado!' : '📅 Agendado local!')
 
-    // WhatsApp confirmação
     const c = clientes.find(x => x.id === agClienteId)
     if (c?.tel) {
-      const tel = (c.tel || '').replace(/\D/g,'')
+      const dtObj = new Date(agData + 'T12:00:00')
+      const nomeDia = NOMES_DIA[dtObj.getDay()]
+      const fimHora = minutosParaSlot(slotParaMinutos(agHora) + ag.duracao)
+      const msg = `Olá ${primeiroNome(c.nome)}! 🚗✨\nSeu agendamento está confirmado!\n📅 ${nomeDia}, ${formatarDataBR(agData)}\n⏰ ${agHora} até ${fimHora}\n🔧 ${svc?.nome}\n📍 BOX 0.0 — Estética Automotiva\nQualquer dúvida é só chamar! 👋`
+      const tel = (c.tel || '').replace(/\D/g, '')
       setTimeout(() => {
         if (confirm(`Enviar confirmação via WhatsApp para ${primeiroNome(c.nome)}?`)) {
           window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, '_blank')
@@ -110,22 +129,10 @@ export function Agenda() {
     showToast('✅ Serviço encerrado! Use COBRAR quando o cliente chegar.')
 
     if (c?.tel) {
+      const veiculo = [c.marca, c.modelo, c.cor].filter(Boolean).join(' ')
+      const msg = `Olá ${primeiroNome(c.nome)}! 🏁\nSeu ${veiculo || 'carro'} está pronto!\n✅ ${ag.servico} concluído com sucesso\nPode vir buscar! 🚗✨\nBOX 0.0 — Estética Automotiva`
+      const tel = (c.tel || '').replace(/\D/g, '')
       setTimeout(() => {
-        const dtObj = new Date(agData + 'T12:00:00')
-        const nomeDia = NOMES_DIA[dtObj.getDay()]
-        const fimHora = minutosParaSlot(slotParaMinutos(agHora) + ag.duracao)
-        const svc = SERVICOS.find(s => s.id === agSvcId)
-        const msg = `Olá ${primeiroNome(c.nome)}! 🚗✨\nSeu agendamento está confirmado!\n📅 ${nomeDia}, ${formatarDataBR(agData)}\n⏰ ${agHora} até ${fimHora}\n🔧 ${svc?.nome}\n📍 BOX 0.0 — Estética Automotiva\nQualquer dúvida é só chamar! 👋`
-        const tel = (c.tel || '').replace(/\D/g,'')
-        if (confirm(`Enviar confirmação via WhatsApp para ${primeiroNome(c.nome)}?`)) {
-          window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, '_blank')
-        }
-      }, 400)
-    }
-  }
-
-  async function confirmarEncerramento() {
-        const tel = (c.tel || '').replace(/\D/g,'')
         if (confirm(`Avisar conclusão via WhatsApp para ${primeiroNome(c.nome)}?`)) {
           window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, '_blank')
         }
@@ -135,8 +142,7 @@ export function Agenda() {
 
   async function cancelar(id: string) {
     if (!confirm('Cancelar este agendamento?')) return
-    const lista = agendamentos.filter(a => a.id !== id)
-    setAgendamentos(lista)
+    setAgendamentos(agendamentos.filter(a => a.id !== id))
     await apiCall('atualizarAgendamento', { id, campos: { status: 'cancelado' } })
     showToast('🗑 Agendamento cancelado')
   }
@@ -148,22 +154,28 @@ export function Agenda() {
 
     const dtObj = dataStrParaDate(formatarDataBR(ag.data)) || new Date()
     const atendimento = {
-      id: gerarId(), clienteId: ag.clienteId,
+      id: gerarId(),
+      clienteId: ag.clienteId,
       data: formatarDataBR(ag.data),
       semana: getISOWeek(dtObj),
       mes: `${dtObj.getFullYear()}-${String(dtObj.getMonth()+1).padStart(2,'0')}`,
       ano: String(dtObj.getFullYear()),
       servicos: dados.svcs || ag.servico,
-      valor: dados.valorOriginal, obs: ag.obsEncerramento || ag.obs || '',
-      formaPagamento: dados.formaPagamento, parcelas: dados.parcelas,
-      taxaPct: dados.taxaPct, valorCobrado: dados.valorCobrado,
-      custoTaxa: dados.custoTaxa, valorLiquido: dados.liquido,
-      divContas: dados.divisao.contas, divMaquinas: dados.divisao.maquinas,
-      divEstoque: dados.divisao.estoque, divLucro: dados.divisao.lucro,
+      valor: dados.valorOriginal,
+      obs: ag.obsEncerramento || ag.obs || '',
+      formaPagamento: dados.formaPagamento,
+      parcelas: dados.parcelas,
+      taxaPct: dados.taxaPct,
+      valorCobrado: dados.valorCobrado,
+      custoTaxa: dados.custoTaxa,
+      valorLiquido: dados.liquido,
+      divContas: dados.divisao.contas,
+      divMaquinas: dados.divisao.maquinas,
+      divEstoque: dados.divisao.estoque,
+      divLucro: dados.divisao.lucro,
       criadoEm: hoje()
     }
 
-    // Atualiza cliente local
     const lista = [...clientes]
     const idx = lista.findIndex(x => x.id === ag.clienteId)
     if (idx >= 0) {
@@ -171,10 +183,10 @@ export function Agenda() {
       setClientes(lista)
     }
 
-    // Envia para Sheets
-    apiCall('salvarAtendimento', { atendimento }).then(r => showToast(r.ok ? '✅ Pagamento registrado!' : '💾 Salvo local'))
+    apiCall('salvarAtendimento', { atendimento }).then(r =>
+      showToast(r.ok ? '✅ Pagamento registrado!' : '💾 Salvo local')
+    )
 
-    // Marca como pago
     const ags = [...agendamentos]
     const agIdx = ags.findIndex(a => a.id === checkoutCob)
     if (agIdx >= 0) {
@@ -205,7 +217,8 @@ export function Agenda() {
       {/* Dias */}
       {dias.map(dia => {
         const iso = dataISO(dia)
-        const diaAgs = agendamentos.filter(a => String(a.data||'').trim() === iso || String(a.data||'').trim() === formatarDataBR(iso))
+        const diaAgs = agendamentos
+          .filter(a => String(a.data||'').trim() === iso || String(a.data||'').trim() === formatarDataBR(iso))
           .sort((a,b) => a.hora.localeCompare(b.hora))
         const ocupados = getSlotsOcupados(iso)
         const slots = gerarTodosSlots()
@@ -215,18 +228,23 @@ export function Agenda() {
         return (
           <div key={iso} className="rounded-xl mb-3 overflow-hidden"
             style={{ background: 'var(--card)', border: `1px solid ${isHoje ? 'var(--verde)' : 'var(--borda)'}` }}>
-            {/* Header do dia */}
-            <div className="flex justify-between items-center px-4 py-3" style={{ background: '#111', borderBottom: '1px solid var(--borda)' }}>
+            <div className="flex justify-between items-center px-4 py-3"
+              style={{ background: '#111', borderBottom: '1px solid var(--borda)' }}>
               <div>
-                <span className="font-bebas text-lg tracking-wider" style={{ color: isHoje ? 'var(--verde)' : 'var(--texto)' }}>
+                <span className="font-bebas text-lg tracking-wider"
+                  style={{ color: isHoje ? 'var(--verde)' : 'var(--texto)' }}>
                   {nomeDia} <span style={{ color: 'var(--verde)' }}>{dia.getDate()}/{String(dia.getMonth()+1).padStart(2,'0')}</span>
                 </span>
-                {isHoje && <span className="ml-2 px-1.5 py-0.5 rounded font-barlow text-[10px] font-bold" style={{ background: 'var(--verde)', color: '#000' }}>HOJE</span>}
+                {isHoje && (
+                  <span className="ml-2 px-1.5 py-0.5 rounded font-barlow text-[10px] font-bold"
+                    style={{ background: 'var(--verde)', color: '#000' }}>HOJE</span>
+                )}
               </div>
-              <div className="font-barlow text-xs" style={{ color: 'var(--dim)' }}>{diaAgs.length} agend.</div>
+              <div className="font-barlow text-xs" style={{ color: 'var(--dim)' }}>
+                {diaAgs.length} agend.
+              </div>
             </div>
 
-            {/* Agendamentos */}
             {diaAgs.map(ag => {
               const c = clientes.find(x => x.id === ag.clienteId)
               const fim = minutosParaSlot(slotParaMinutos(ag.hora) + ag.duracao)
@@ -238,14 +256,19 @@ export function Agenda() {
               const bg = bgMap[status] || 'transparent'
 
               return (
-                <div key={ag.id} className="px-4 py-3" style={{ borderBottom: '1px solid #1a1a1a', background: bg }}>
+                <div key={ag.id} className="px-4 py-3"
+                  style={{ borderBottom: '1px solid #1a1a1a', background: bg }}>
                   <div className="flex justify-between items-start gap-2">
                     <div className="flex-1">
                       <div className="font-barlow font-bold text-sm uppercase" style={{ color: cor }}>
                         {ag.hora} — {fim}
                       </div>
-                      <div className="font-barlow text-sm mt-1">{primeiroNome(c?.nome) || 'Cliente'} · {ag.servico}</div>
-                      {ag.obs && <div className="font-barlow text-xs mt-1" style={{ color: 'var(--dim)' }}>{ag.obs}</div>}
+                      <div className="font-barlow text-sm mt-1">
+                        {primeiroNome(c?.nome) || 'Cliente'} · {ag.servico}
+                      </div>
+                      {ag.obs && (
+                        <div className="font-barlow text-xs mt-1" style={{ color: 'var(--dim)' }}>{ag.obs}</div>
+                      )}
                       <div className="inline-block mt-2 px-2 py-0.5 rounded-full font-barlow text-[9px] font-bold tracking-wider"
                         style={{ border: `1px solid ${cor}`, color: cor }}>
                         {badgeMap[status] || status.toUpperCase()}
@@ -284,14 +307,16 @@ export function Agenda() {
               )
             })}
 
-            {/* Grade de slots */}
             <div className="p-3">
-              <div className="font-barlow text-[10px] tracking-[2px] uppercase mb-2" style={{ color: 'var(--dim)' }}>Disponibilidade</div>
+              <div className="font-barlow text-[10px] tracking-[2px] uppercase mb-2" style={{ color: 'var(--dim)' }}>
+                Disponibilidade
+              </div>
               <div className="grid grid-cols-4 gap-1">
                 {slots.map(slot => {
                   const livre = !ocupados.has(slot)
                   return (
-                    <button key={slot} onClick={() => livre && abrirModalAgendamento(iso, slot)}
+                    <button key={slot}
+                      onClick={() => livre && abrirModalAgendamento(iso, slot)}
                       className="py-1.5 rounded-lg font-barlow font-bold text-xs text-center"
                       style={{
                         background: livre ? '#1a2600' : '#1a1a1a',
@@ -314,13 +339,18 @@ export function Agenda() {
         <div className="fixed inset-0 z-[10000] overflow-y-auto" style={{ background: '#080808' }}>
           <div className="max-w-[500px] mx-auto p-4 pb-20">
             <div className="flex justify-between items-center mb-5">
-              <div className="font-bebas text-2xl tracking-widest" style={{ color: 'var(--verde)' }}>NOVO AGENDAMENTO</div>
-              <button onClick={() => setModalAg(false)} className="px-4 py-2 rounded-lg font-barlow text-sm font-bold"
+              <div className="font-bebas text-2xl tracking-widest" style={{ color: 'var(--verde)' }}>
+                NOVO AGENDAMENTO
+              </div>
+              <button onClick={() => setModalAg(false)}
+                className="px-4 py-2 rounded-lg font-barlow text-sm font-bold"
                 style={{ background: '#1c1c1c', border: '1px solid #333', color: '#ccc' }}>✕</button>
             </div>
 
             <div className="mb-3">
-              <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>Cliente</label>
+              <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>
+                Cliente
+              </label>
               <select value={agClienteId} onChange={e => setAgClienteId(e.target.value)}
                 className="w-full rounded-xl px-4 py-3 text-sm outline-none"
                 style={{ background: '#111', border: '1px solid var(--borda)', color: 'var(--texto)' }}>
@@ -329,8 +359,10 @@ export function Agenda() {
             </div>
 
             <div className="mb-3">
-              <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>Serviço</label>
-              <select value={agSvcId} onChange={e => { setAgSvcId(e.target.value); setAgValorAcordado(0) }}
+              <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>
+                Serviço
+              </label>
+              <select value={agSvcId} onChange={e => setAgSvcId(e.target.value)}
                 className="w-full rounded-xl px-4 py-3 text-sm outline-none"
                 style={{ background: '#111', border: '1px solid var(--borda)', color: 'var(--texto)' }}>
                 {SERVICOS.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
@@ -339,13 +371,17 @@ export function Agenda() {
 
             <div className="grid grid-cols-2 gap-3 mb-3">
               <div>
-                <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>Data</label>
+                <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>
+                  Data
+                </label>
                 <input type="date" value={agData} onChange={e => setAgData(e.target.value)}
                   className="w-full rounded-xl px-4 py-3 text-sm outline-none"
                   style={{ background: '#111', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
               </div>
               <div>
-                <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>Horário</label>
+                <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>
+                  Horário
+                </label>
                 <input type="time" value={agHora} onChange={e => setAgHora(e.target.value)}
                   step="1800"
                   className="w-full rounded-xl px-4 py-3 text-sm outline-none"
@@ -354,15 +390,20 @@ export function Agenda() {
             </div>
 
             <div className="mb-3">
-              <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>Valor acordado (R$)</label>
-              <input type="number" value={agValorAcordado || ''} onChange={e => setAgValorAcordado(Number(e.target.value))}
+              <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>
+                Valor acordado (R$)
+              </label>
+              <input type="number" value={agValorAcordado || ''}
+                onChange={e => setAgValorAcordado(Number(e.target.value))}
                 placeholder="0"
                 className="w-full rounded-xl px-4 py-3 text-sm outline-none"
                 style={{ background: '#111', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
             </div>
 
             <div className="mb-5">
-              <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>Observações</label>
+              <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>
+                Observações
+              </label>
               <input type="text" value={agObs} onChange={e => setAgObs(e.target.value)}
                 placeholder="Observações opcionais..."
                 className="w-full rounded-xl px-4 py-3 text-sm outline-none"
@@ -380,12 +421,15 @@ export function Agenda() {
 
       {/* Modal Encerrar */}
       {modalEnc && (
-        <div className="fixed inset-0 z-[10001] flex items-end justify-center" style={{ background: 'rgba(0,0,0,.8)' }}>
+        <div className="fixed inset-0 z-[10001] flex items-end justify-center"
+          style={{ background: 'rgba(0,0,0,.8)' }}>
           <div className="w-full max-w-[500px] rounded-t-2xl p-6 pb-10" style={{ background: '#111' }}>
-            <div className="font-bebas text-2xl tracking-widest mb-4" style={{ color: 'var(--verde)' }}>ENCERRAR SERVIÇO</div>
+            <div className="font-bebas text-2xl tracking-widest mb-4" style={{ color: 'var(--verde)' }}>
+              ENCERRAR SERVIÇO
+            </div>
             <div className="mb-4">
               <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>
-                Observação de conclusão (opcional)
+                Observação (opcional)
               </label>
               <input type="text" value={encObs} onChange={e => setEncObs(e.target.value)}
                 placeholder="Ex: Cliente muito satisfeito..."
@@ -399,7 +443,7 @@ export function Agenda() {
                 Cancelar
               </button>
               <button onClick={confirmarEncerramento}
-                className="flex-2 flex-1 py-3 rounded-xl font-barlow font-extrabold text-sm tracking-widest uppercase"
+                className="flex-1 py-3 rounded-xl font-barlow font-extrabold text-sm tracking-widest uppercase"
                 style={{ background: 'var(--verde)', color: '#080808', border: 'none' }}>
                 ENCERRAR
               </button>
