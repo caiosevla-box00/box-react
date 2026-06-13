@@ -56,16 +56,42 @@ export function useSync() {
     const rAtAll = await apiCall('getAtendimentos', {})
     if (rAtAll.ok && Array.isArray((rAtAll as any).data)) {
       const normalized = (rAtAll as any).data.map((a: any) => {
+        // Tenta parsear a data em qualquer formato
+        const rawData = String(a.data || '').trim()
         const dt = (() => {
-          const s = String(a.data || '').trim()
-          const d = new Date(s)
-          return isNaN(d.getTime()) ? null : d
+          // Tenta via dataStrParaDate (suporta dd/mm/yyyy e yyyy-mm-dd)
+          const d1 = dataStrParaDate(rawData)
+          if (d1) return d1
+          // Tenta via Date nativo (Sun Mar 22 2026... formato longo)
+          const d2 = new Date(rawData)
+          return isNaN(d2.getTime()) ? null : d2
         })()
+
+        // Se não conseguiu parsear a data, tenta parsear mes/semana diretamente
+        const mesRaw = String(a.mes || '').trim()
+        const semanaRaw = String(a.semana || '').trim()
+
+        // Normaliza mes: pode ser "Sun Mar 01 2026..." → "2026-03"
+        const mesNorm = (() => {
+          if (/^\d{4}-\d{2}$/.test(mesRaw)) return mesRaw // já correto
+          if (dt) return `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}`
+          const d = new Date(mesRaw)
+          if (!isNaN(d.getTime())) return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`
+          return ''
+        })()
+
+        // Normaliza semana: pode ser "2026-W10" já correto, ou recalcula
+        const semanaNorm = (() => {
+          if (/^\d{4}-W\d{2}$/.test(semanaRaw)) return semanaRaw // já correto
+          if (dt) return getISOWeek(dt)
+          return ''
+        })()
+
         return {
           ...a,
-          data:         dt ? formatarDataBR(dt.toISOString().slice(0,10)) : formatarDataBR(a.data),
-          semana:       dt ? getISOWeek(dt) : String(a.semana||'').trim(),
-          mes:          dt ? `${dt.getFullYear()}-${String(dt.getMonth()+1).padStart(2,'0')}` : String(a.mes||'').trim(),
+          data:         dt ? formatarDataBR(dt.toISOString().slice(0,10)) : rawData,
+          semana:       semanaNorm,
+          mes:          mesNorm,
           ano:          dt ? String(dt.getFullYear()) : String(a.ano||'').trim(),
           valor:        parseValor(a.valor),
           valorLiquido: parseValor(a.valorLiquido),
