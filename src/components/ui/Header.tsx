@@ -11,24 +11,33 @@ export function Header() {
   }
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 max-w-[500px] mx-auto"
-      style={{ background: '#080808', borderBottom: '1px solid #1a1a1a' }}>
+    <header className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 max-w-[500px] mx-auto"
+      style={{
+        background: '#111111',
+        borderBottom: '2px solid var(--verde)',
+        paddingTop: '12px',
+        paddingBottom: '10px',
+        minHeight: '60px'
+      }}>
       <div>
-        <div className="font-bebas text-2xl tracking-widest">
+        <div className="font-bebas tracking-widest leading-none" style={{ fontSize: '28px' }}>
           BOX <span style={{ color: 'var(--verde)' }}>0.0</span>
         </div>
-        <div className="font-barlow text-[10px] tracking-[3px] uppercase" style={{ color: '#444' }}>
+        <div className="font-barlow" style={{ fontSize: '10px', color: '#555', letterSpacing: '3px', textTransform: 'uppercase', marginTop: '2px' }}>
           Estética Automotiva
         </div>
       </div>
-      <div className="flex items-center gap-3">
-        <div className="font-barlow text-[10px] tracking-widest uppercase"
-          style={{ color: apiOnline ? 'var(--verde)' : 'var(--erro)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div className="font-barlow" style={{ fontSize: '10px', letterSpacing: '1px', textTransform: 'uppercase', color: apiOnline ? 'var(--verde)' : 'var(--erro)' }}>
           {apiOnline ? '🟢 Nuvem OK' : '🔴 Offline'}
         </div>
         <button onClick={handleSync}
-          className="font-barlow text-xs font-bold tracking-widest uppercase px-3 py-2 rounded-lg"
-          style={{ background: 'transparent', border: '1px solid var(--verde)', color: 'var(--verde)' }}>
+          className="font-barlow font-bold tracking-widest uppercase"
+          style={{
+            fontSize: '11px', padding: '8px 14px', borderRadius: '8px',
+            background: 'transparent', border: '1px solid var(--verde)', color: 'var(--verde)',
+            cursor: 'pointer'
+          }}>
           ☁️ SYNC
         </button>
       </div>
