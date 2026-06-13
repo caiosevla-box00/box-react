@@ -8,16 +8,32 @@ export function Loading() {
   return (
     <div className="fixed inset-0 z-[99999] flex flex-col items-center justify-center px-8"
       style={{ background: '#080808' }}>
-      <img src="/icon.png" alt="BOX 0.0"
-        className="w-36 h-36 rounded-full mb-7 animate-pulse-verde"
-        style={{ boxShadow: '0 0 40px rgba(170,255,0,.25)' }} />
 
-      <div className="font-bebas text-5xl tracking-widest text-white mb-1">
-        BOX <span style={{ color: 'var(--verde)' }}>0.0</span>
+      {/* Logo animado */}
+      <div className="mb-7 animate-pulse-verde">
+        <div style={{
+          width: 120, height: 120, borderRadius: '50%',
+          background: '#0a0a0a',
+          border: '2px solid #AAFF00',
+          boxShadow: '0 0 40px rgba(170,255,0,.25)',
+          display: 'flex', flexDirection: 'column',
+          alignItems: 'center', justifyContent: 'center'
+        }}>
+          <div style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: 36, letterSpacing: 4, color: '#fff', lineHeight: 1 }}>
+            BOX
+          </div>
+          <div style={{ fontFamily: '"Bebas Neue", sans-serif', fontSize: 28, letterSpacing: 3, color: '#AAFF00', lineHeight: 1 }}>
+            0.0
+          </div>
+          <div style={{ fontFamily: '"Barlow Condensed", sans-serif', fontSize: 8, letterSpacing: 2, color: '#5abf00', textTransform: 'uppercase', marginTop: 3 }}>
+            Estética
+          </div>
+        </div>
       </div>
-      <div className="font-barlow text-xs tracking-[4px] uppercase mb-9"
+
+      <div className="font-barlow text-sm tracking-[4px] uppercase mb-9"
         style={{ color: 'var(--verde-dim)' }}>
-        Estética Automotiva
+        Automotiva
       </div>
 
       <div className="font-barlow text-sm tracking-widest uppercase mb-4 text-center min-h-5"
