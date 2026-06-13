@@ -80,7 +80,7 @@ export default function App() {
       {!loading && (
         <>
           <Header />
-          <main className="pt-16 pb-20 px-4 min-h-screen overflow-y-auto">
+          <main style={{ paddingTop: '72px', paddingBottom: '80px', paddingLeft: '16px', paddingRight: '16px', minHeight: '100vh', overflowY: 'auto' }}>
             {renderTab()}
           </main>
           <TabBar />
