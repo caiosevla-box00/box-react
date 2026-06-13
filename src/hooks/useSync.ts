@@ -2,7 +2,7 @@ import { useCallback } from 'react'
 import { apiCall } from '@/lib/api'
 import { useStore } from '@/store'
 import { SERVICOS } from '@/lib/servicos'
-import { formatarDataBR, getISOWeek, parseValor } from '@/lib/utils'
+import { formatarDataBR, getISOWeek, parseValor, dataStrParaDate } from '@/lib/utils'
 import type { Cliente, Agendamento } from '@/types'
 
 export function useSync() {
