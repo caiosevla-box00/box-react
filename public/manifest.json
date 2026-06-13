@@ -1,0 +1,13 @@
+{
+  "name": "BOX 0.0 — Estética Automotiva",
+  "short_name": "BOX 0.0",
+  "description": "Sistema de gestão para estética automotiva",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#080808",
+  "theme_color": "#080808",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "/icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
