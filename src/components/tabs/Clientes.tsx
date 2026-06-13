@@ -82,7 +82,7 @@ export function Clientes() {
     const msg = `Oi ${c.nome.split(' ')[0]}! 🚗✨\n\nFaz um tempinho que não vejo você por aqui...\n\n`
       + (veiculo ? `Seu ${veiculo} está precisando de um cuidado especial? 😄\n\n` : `Seu carro está precisando de cuidado especial? 😄\n\n`)
       + `Tenho agenda disponível essa semana!\nMe chama aqui 👇\n\nBOX 0.0 — Estética Automotiva 🏁`
-    const tel = c.tel.replace(/\D/g, '')
+    const tel = (c.tel || '').replace(/\D/g, '')
     window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, '_blank')
   }
 

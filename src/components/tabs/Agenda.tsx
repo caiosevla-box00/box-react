@@ -85,11 +85,7 @@ export function Agenda() {
     // WhatsApp confirmação
     const c = clientes.find(x => x.id === agClienteId)
     if (c?.tel) {
-      const dtObj = new Date(agData + 'T12:00:00')
-      const nomeDia = NOMES_DIA[dtObj.getDay()]
-      const fimHora = minutosParaSlot(slotParaMinutos(agHora) + ag.duracao)
-      const msg = `Olá ${primeiroNome(c.nome)}! 🚗✨\nSeu agendamento está confirmado!\n📅 ${nomeDia}, ${formatarDataBR(agData)}\n⏰ ${agHora} até ${fimHora}\n🔧 ${svc?.nome}\n📍 BOX 0.0 — Estética Automotiva\nQualquer dúvida é só chamar! 👋`
-      const tel = c.tel.replace(/\D/g,'')
+      const tel = (c.tel || '').replace(/\D/g,'')
       setTimeout(() => {
         if (confirm(`Enviar confirmação via WhatsApp para ${primeiroNome(c.nome)}?`)) {
           window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, '_blank')
@@ -115,9 +111,21 @@ export function Agenda() {
 
     if (c?.tel) {
       setTimeout(() => {
-        const veiculo = [c.marca, c.modelo, c.cor].filter(Boolean).join(' ')
-        const msg = `Olá ${primeiroNome(c.nome)}! 🏁\nSeu ${veiculo || 'carro'} está pronto!\n✅ ${ag.servico} concluído com sucesso\nPode vir buscar! 🚗✨\nBOX 0.0 — Estética Automotiva`
-        const tel = c.tel.replace(/\D/g,'')
+        const dtObj = new Date(agData + 'T12:00:00')
+        const nomeDia = NOMES_DIA[dtObj.getDay()]
+        const fimHora = minutosParaSlot(slotParaMinutos(agHora) + ag.duracao)
+        const svc = SERVICOS.find(s => s.id === agSvcId)
+        const msg = `Olá ${primeiroNome(c.nome)}! 🚗✨\nSeu agendamento está confirmado!\n📅 ${nomeDia}, ${formatarDataBR(agData)}\n⏰ ${agHora} até ${fimHora}\n🔧 ${svc?.nome}\n📍 BOX 0.0 — Estética Automotiva\nQualquer dúvida é só chamar! 👋`
+        const tel = (c.tel || '').replace(/\D/g,'')
+        if (confirm(`Enviar confirmação via WhatsApp para ${primeiroNome(c.nome)}?`)) {
+          window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, '_blank')
+        }
+      }, 400)
+    }
+  }
+
+  async function confirmarEncerramento() {
+        const tel = (c.tel || '').replace(/\D/g,'')
         if (confirm(`Avisar conclusão via WhatsApp para ${primeiroNome(c.nome)}?`)) {
           window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, '_blank')
         }
