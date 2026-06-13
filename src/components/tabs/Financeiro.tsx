@@ -266,29 +266,32 @@ export function Financeiro() {
       <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--card)', border: '1px solid var(--borda)' }}>
         <div className="font-barlow font-bold text-xs tracking-[2px] uppercase mb-4" style={{ color: 'var(--verde)' }}>
           📊 Faturamento por período
-          {graficoPeriodo && <span className="ml-1 text-[10px]" style={{ color: '#555' }}>(clique para filtrar)</span>}
         </div>
-        <div className="flex items-end gap-1 h-32">
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '4px', height: '120px', position: 'relative' }}>
           {graficoData.map((p, i) => {
-            const h = maxVal > 0 ? (p.val / maxVal) * 100 : 0
+            const h = maxVal > 0 ? Math.max((p.val / maxVal) * 100, p.val > 0 ? 4 : 0) : 0
             const isSelected = graficoPeriodo === p.key
             const isCurrent = periodo === 'semana' ? p.key === getSemanaAtual() : p.key === getMesAtual()
+            const barColor = isSelected ? '#AAFF00' : isCurrent ? '#5abf00' : '#2a3a00'
+            const barBorder = isSelected || isCurrent ? '1px solid var(--verde)' : '1px solid transparent'
             return (
-              <div key={i} className="flex-1 flex flex-col items-center justify-end cursor-pointer"
+              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', height: '100%', cursor: 'pointer' }}
                 onClick={() => setGraficoPeriodo(isSelected ? null : p.key)}>
                 {p.val > 0 && (
-                  <div className="font-barlow text-[9px] mb-1 text-center" style={{ color: isCurrent || isSelected ? 'var(--verde)' : '#555' }}>
+                  <div style={{ fontSize: '9px', marginBottom: '3px', color: isCurrent || isSelected ? 'var(--verde)' : '#555', textAlign: 'center', lineHeight: 1 }}>
                     R${p.val.toFixed(0)}
                   </div>
                 )}
-                <div className="w-full rounded-t-sm transition-all"
-                  style={{
-                    height: `${Math.max(h, 2)}%`,
-                    background: isSelected ? '#AAFF00' : isCurrent ? '#5abf00' : '#2a3a00',
-                    border: isSelected || isCurrent ? '1px solid var(--verde)' : '1px solid transparent',
-                    minHeight: '2px'
-                  }} />
-                <div className="font-barlow text-[9px] mt-1 text-center" style={{ color: isCurrent || isSelected ? 'var(--verde)' : '#444' }}>
+                <div style={{
+                  width: '100%',
+                  height: `${h}%`,
+                  minHeight: p.val > 0 ? '3px' : '0',
+                  background: barColor,
+                  border: barBorder,
+                  borderRadius: '3px 3px 0 0',
+                  transition: 'height 0.4s ease'
+                }} />
+                <div style={{ fontSize: '9px', marginTop: '4px', color: isCurrent || isSelected ? 'var(--verde)' : '#444', textAlign: 'center' }}>
                   {p.label}
                 </div>
               </div>
