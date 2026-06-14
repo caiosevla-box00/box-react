@@ -5,6 +5,8 @@ import type { FechamentoDados } from '@/types'
 interface CheckoutProps {
   valorInicial: number
   svcsTexto: string
+  svcIds?: string[]
+  cliente?: { nome: string; veiculo?: string; tel?: string }
   onConfirmar: (dados: FechamentoDados) => void
   onCancelar: () => void
 }
@@ -13,7 +15,7 @@ type FormaPagto = 'pix' | 'debito' | 'credito'
 
 const TAXAS_CREDITO = [0, 3.49, 4.49, 5.49, 5.99, 6.49, 6.99, 7.49, 7.99, 8.49, 8.99, 9.49, 9.99]
 
-export function Checkout({ valorInicial, svcsTexto, onConfirmar, onCancelar }: CheckoutProps) {
+export function Checkout({ valorInicial, svcsTexto, svcIds = [], cliente, onConfirmar, onCancelar }: CheckoutProps) {
   const { divisao, taxaDebito } = useStore()
   const [forma, setForma] = useState<FormaPagto>('pix')
   const [parcelas, setParcelas] = useState(1)
@@ -169,13 +171,13 @@ export function Checkout({ valorInicial, svcsTexto, onConfirmar, onCancelar }: C
           <button onClick={async () => {
             const { gerarOrcamentoPDF } = await import('@/lib/orcamentoPDF')
             gerarOrcamentoPDF({
-              servicos: svcsTexto.split(' + ').map(n => ({ nome: n, preco: valorInicial, tempo: '' })),
+              cliente,
+              svcIds: svcIds.length > 0 ? svcIds : [],
               total: valorInicial,
               formaPagamento: forma,
               parcelas,
               valorCobrado,
               taxaPct: taxa,
-              data: new Date().toLocaleDateString('pt-BR'),
             })
           }}
             style={{ flex:1, padding:'15px', borderRadius:'var(--radius-md)', border:'1px solid var(--verde)', background:'transparent', color:'var(--verde)', fontSize:'14px', fontWeight:700, cursor:'pointer' }}>

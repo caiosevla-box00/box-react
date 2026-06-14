@@ -3,7 +3,7 @@ import { useStore } from '@/store'
 import { SERVICOS, CATEGORIAS } from '@/lib/servicos'
 import type { TipoVeiculo } from '@/types'
 
-interface Props { onFechar: (svcs: string[], total: number) => void }
+interface Props { onFechar: (svcs: string[], total: number, svcIds: string[]) => void }
 
 const V: { id: TipoVeiculo; icon: string; label: string }[] = [
   { id: 'hatch', icon: '🚗', label: 'Hatch' },
@@ -123,7 +123,7 @@ export function Orcamento({ onFechar }: Props) {
               <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--verde)', lineHeight: 1 }}>R${total}</div>
             </div>
           </div>
-          <button onClick={() => onFechar(Array.from(sel).map(id => SERVICOS.find(s => s.id === id)?.nome || id), total)}
+          <button onClick={() => onFechar(Array.from(sel).map(id => SERVICOS.find(s => s.id === id)?.nome || id), total, Array.from(sel))}
             style={{ width: '100%', background: 'var(--verde)', color: '#000', fontSize: '15px', fontWeight: 700, padding: '15px', borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer', letterSpacing: '1px' }}>
             FECHAR SERVIÇO →
           </button>
