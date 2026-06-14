@@ -6,460 +6,248 @@ import { SERVICOS, TEMPO_SERVICO, HORA_INICIO, HORA_FIM, SLOT_MIN } from '@/lib/
 import type { Agendamento, FechamentoDados } from '@/types'
 import { Checkout } from '@/components/modals/Checkout'
 
-const NOMES_DIA = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado']
+const DIAS_SEMANA = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
+const DIAS_FULL   = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado']
 const TOTAL_SLOTS = ((HORA_FIM - HORA_INICIO) * 60) / SLOT_MIN
 
-function slotParaMinutos(slot: string) {
-  const [h, m] = slot.split(':').map(Number)
-  return (h - HORA_INICIO) * 60 + m
-}
-function minutosParaSlot(min: number) {
-  const total = HORA_INICIO * 60 + min
-  return `${String(Math.floor(total/60)).padStart(2,'0')}:${String(total%60).padStart(2,'0')}`
-}
-function gerarTodosSlots() {
-  return Array.from({ length: TOTAL_SLOTS }, (_, i) => minutosParaSlot(i * SLOT_MIN))
-}
-function getDiasSemana(offset: number) {
-  const now = new Date()
-  const diaSemana = now.getDay() === 0 ? 6 : now.getDay() - 1
-  const seg = new Date(now)
-  seg.setDate(now.getDate() - diaSemana + offset * 7)
-  seg.setHours(0,0,0,0)
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(seg)
-    d.setDate(seg.getDate() + i)
-    return d
-  })
+function slotMin(slot: string) { const [h,m]=slot.split(':').map(Number); return (h-HORA_INICIO)*60+m }
+function minSlot(min: number) { const t=HORA_INICIO*60+min; return `${String(Math.floor(t/60)).padStart(2,'0')}:${String(t%60).padStart(2,'0')}` }
+function allSlots() { return Array.from({length:TOTAL_SLOTS},(_,i)=>minSlot(i*SLOT_MIN)) }
+function getWeekDays(offset: number) {
+  const now=new Date(); const ds=now.getDay()===0?6:now.getDay()-1
+  const seg=new Date(now); seg.setDate(now.getDate()-ds+offset*7); seg.setHours(0,0,0,0)
+  return Array.from({length:7},(_,i)=>{ const d=new Date(seg); d.setDate(seg.getDate()+i); return d })
 }
 
 export function Agenda() {
-  const { agendamentos, setAgendamentos, clientes, setClientes, showToast, divisao } = useStore()
+  const { agendamentos, setAgendamentos, clientes, setClientes, showToast } = useStore()
   const [offset, setOffset] = useState(0)
+  const [selDay, setSelDay] = useState(dataISO(new Date()))
   const [modalAg, setModalAg] = useState(false)
-  const [modalEnc, setModalEnc] = useState<string | null>(null)
-  const [checkoutCob, setCheckoutCob] = useState<string | null>(null)
+  const [modalEnc, setModalEnc] = useState<string|null>(null)
+  const [checkoutId, setCheckoutId] = useState<string|null>(null)
   const [agData, setAgData] = useState('')
   const [agHora, setAgHora] = useState('')
   const [agSvcId, setAgSvcId] = useState(SERVICOS[0].id)
-  const [agObs, setAgObs] = useState('')
   const [agClienteId, setAgClienteId] = useState('')
-  const [agValorAcordado, setAgValorAcordado] = useState(0)
+  const [agValor, setAgValor] = useState(0)
+  const [agObs, setAgObs] = useState('')
   const [encObs, setEncObs] = useState('')
 
-  const dias = getDiasSemana(offset)
-  const primeiroDia = dias[0]
-  const ultimoDia = dias[6]
+  const days = getWeekDays(offset)
 
-  function getSlotsOcupados(iso: string) {
-    const ocupados = new Set<string>()
-    agendamentos
-      .filter(a => String(a.data||'').trim() === iso || String(a.data||'').trim() === formatarDataBR(iso))
-      .forEach(ag => {
-        const ini = slotParaMinutos(ag.hora)
-        for (let i = 0; i < Math.ceil(ag.duracao / SLOT_MIN); i++) {
-          ocupados.add(minutosParaSlot(ini + i * SLOT_MIN))
-        }
-      })
-    return ocupados
+  function getOcupados(iso: string) {
+    const s=new Set<string>()
+    agendamentos.filter(a=>String(a.data||'').trim()===iso||String(a.data||'').trim()===formatarDataBR(iso))
+      .forEach(ag=>{ const ini=slotMin(ag.hora); for(let i=0;i<Math.ceil(ag.duracao/SLOT_MIN);i++) s.add(minSlot(ini+i*SLOT_MIN)) })
+    return s
   }
 
-  function abrirModalAgendamento(iso: string, slot?: string) {
-    setAgData(iso)
-    setAgHora(slot || '')
-    setAgSvcId(SERVICOS[0].id)
-    setAgObs('')
-    setAgClienteId(clientes[0]?.id || '')
-    setAgValorAcordado(0)
-    setModalAg(true)
-  }
+  const selAgs = agendamentos
+    .filter(a => String(a.data||'').trim()===selDay || String(a.data||'').trim()===formatarDataBR(selDay))
+    .sort((a,b) => a.hora.localeCompare(b.hora))
+  const ocupados = getOcupados(selDay)
 
-  async function confirmarAgendamento() {
-    if (!agClienteId || !agData || !agHora) {
-      showToast('⚠️ Preencha todos os campos')
-      return
-    }
-    const svc = SERVICOS.find(s => s.id === agSvcId)
-    const ag: Agendamento = {
-      id: gerarId(),
-      clienteId: agClienteId,
-      data: agData,
-      hora: agHora,
-      duracao: TEMPO_SERVICO[agSvcId] || 60,
-      servico: svc?.nome || agSvcId,
-      svcId: agSvcId,
-      obs: agObs,
-      status: 'agendado',
-      valorAcordado: agValorAcordado,
-      criadoEm: hoje()
-    }
+  async function confirmarAg() {
+    if (!agClienteId||!agData||!agHora) { showToast('⚠️ Preencha todos os campos'); return }
+    const svc=SERVICOS.find(s=>s.id===agSvcId)
+    const ag: Agendamento = { id:gerarId(), clienteId:agClienteId, data:agData, hora:agHora, duracao:TEMPO_SERVICO[agSvcId]||60, servico:svc?.nome||agSvcId, svcId:agSvcId, obs:agObs, status:'agendado', valorAcordado:agValor, criadoEm:hoje() }
     setAgendamentos([...agendamentos, ag])
     setModalAg(false)
-    const r = await apiCall('salvarAgendamento', { agendamento: ag })
-    showToast(r.ok ? '📅 Agendado!' : '📅 Agendado local!')
-
-    const c = clientes.find(x => x.id === agClienteId)
+    const r=await apiCall('salvarAgendamento',{agendamento:ag})
+    showToast(r.ok?'📅 Agendado!':'📅 Agendado local!')
+    const c=clientes.find(x=>x.id===agClienteId)
     if (c?.tel) {
-      const dtObj = new Date(agData + 'T12:00:00')
-      const nomeDia = NOMES_DIA[dtObj.getDay()]
-      const fimHora = minutosParaSlot(slotParaMinutos(agHora) + ag.duracao)
-      const msg = `Olá ${primeiroNome(c.nome)}! 🚗✨\nSeu agendamento está confirmado!\n📅 ${nomeDia}, ${formatarDataBR(agData)}\n⏰ ${agHora} até ${fimHora}\n🔧 ${svc?.nome}\n📍 BOX 0.0 — Estética Automotiva\nQualquer dúvida é só chamar! 👋`
-      const tel = (c.tel || '').replace(/\D/g, '')
-      setTimeout(() => {
-        if (confirm(`Enviar confirmação via WhatsApp para ${primeiroNome(c.nome)}?`)) {
-          window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, '_blank')
-        }
-      }, 400)
+      const dtObj=new Date(agData+'T12:00:00'); const nomeDia=DIAS_FULL[dtObj.getDay()]
+      const fim=minSlot(slotMin(agHora)+ag.duracao)
+      const msg=`Olá ${primeiroNome(c.nome)}! 🚗✨\nSeu agendamento está confirmado!\n📅 ${nomeDia}, ${formatarDataBR(agData)}\n⏰ ${agHora} até ${fim}\n🔧 ${svc?.nome}\n📍 BOX 0.0 — Estética Automotiva\nQualquer dúvida é só chamar! 👋`
+      const tel=(c.tel||'').replace(/\D/g,'')
+      setTimeout(()=>{ if(confirm(`Enviar confirmação WhatsApp para ${primeiroNome(c.nome)}?`)) window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`,'_blank') },400)
     }
   }
 
-  async function confirmarEncerramento() {
+  async function confirmarEnc() {
     if (!modalEnc) return
-    const lista = [...agendamentos]
-    const idx = lista.findIndex(a => a.id === modalEnc)
-    if (idx < 0) return
-    lista[idx] = { ...lista[idx], status: 'concluido', obsEncerramento: encObs }
+    const lista=[...agendamentos]; const idx=lista.findIndex(a=>a.id===modalEnc)
+    if (idx<0) return
+    lista[idx]={...lista[idx],status:'concluido',obsEncerramento:encObs}
     setAgendamentos(lista)
-    await apiCall('atualizarAgendamento', { id: modalEnc, campos: { status: 'concluido', obsEncerramento: encObs } })
-
-    const ag = lista[idx]
-    const c = clientes.find(x => x.id === ag.clienteId)
-    setModalEnc(null)
-    setEncObs('')
-    showToast('✅ Serviço encerrado! Use COBRAR quando o cliente chegar.')
-
+    await apiCall('atualizarAgendamento',{id:modalEnc,campos:{status:'concluido',obsEncerramento:encObs}})
+    const ag=lista[idx]; const c=clientes.find(x=>x.id===ag.clienteId)
+    setModalEnc(null); setEncObs('')
+    showToast('✅ Encerrado! Use COBRAR quando o cliente chegar.')
     if (c?.tel) {
-      const veiculo = [c.marca, c.modelo, c.cor].filter(Boolean).join(' ')
-      const msg = `Olá ${primeiroNome(c.nome)}! 🏁\nSeu ${veiculo || 'carro'} está pronto!\n✅ ${ag.servico} concluído com sucesso\nPode vir buscar! 🚗✨\nBOX 0.0 — Estética Automotiva`
-      const tel = (c.tel || '').replace(/\D/g, '')
-      setTimeout(() => {
-        if (confirm(`Avisar conclusão via WhatsApp para ${primeiroNome(c.nome)}?`)) {
-          window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`, '_blank')
-        }
-      }, 500)
+      const veiculo=[c.marca,c.modelo,c.cor].filter(Boolean).join(' ')
+      const msg=`Olá ${primeiroNome(c.nome)}! 🏁\nSeu ${veiculo||'carro'} está pronto!\n✅ ${ag.servico} concluído\nPode vir buscar! 🚗✨\nBOX 0.0 — Estética Automotiva`
+      const tel=(c.tel||'').replace(/\D/g,'')
+      setTimeout(()=>{ if(confirm(`Avisar conclusão WhatsApp para ${primeiroNome(c.nome)}?`)) window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`,'_blank') },500)
     }
   }
 
   async function cancelar(id: string) {
-    if (!confirm('Cancelar este agendamento?')) return
-    setAgendamentos(agendamentos.filter(a => a.id !== id))
-    await apiCall('atualizarAgendamento', { id, campos: { status: 'cancelado' } })
-    showToast('🗑 Agendamento cancelado')
+    if (!confirm('Cancelar agendamento?')) return
+    setAgendamentos(agendamentos.filter(a=>a.id!==id))
+    await apiCall('atualizarAgendamento',{id,campos:{status:'cancelado'}})
+    showToast('🗑 Cancelado')
   }
 
-  function handleCheckoutConfirm(dados: FechamentoDados) {
-    if (!checkoutCob) return
-    const ag = agendamentos.find(a => a.id === checkoutCob)
-    if (!ag) return
-
-    const dtObj = dataStrParaDate(formatarDataBR(ag.data)) || new Date()
-    const atendimento = {
-      id: gerarId(),
-      clienteId: ag.clienteId,
-      data: formatarDataBR(ag.data),
-      semana: getISOWeek(dtObj),
-      mes: `${dtObj.getFullYear()}-${String(dtObj.getMonth()+1).padStart(2,'0')}`,
-      ano: String(dtObj.getFullYear()),
-      servicos: dados.svcs || ag.servico,
-      valor: dados.valorOriginal,
-      obs: ag.obsEncerramento || ag.obs || '',
-      formaPagamento: dados.formaPagamento,
-      parcelas: dados.parcelas,
-      taxaPct: dados.taxaPct,
-      valorCobrado: dados.valorCobrado,
-      custoTaxa: dados.custoTaxa,
-      valorLiquido: dados.liquido,
-      divContas: dados.divisao.contas,
-      divMaquinas: dados.divisao.maquinas,
-      divEstoque: dados.divisao.estoque,
-      divLucro: dados.divisao.lucro,
-      criadoEm: hoje()
-    }
-
-    const lista = [...clientes]
-    const idx = lista.findIndex(x => x.id === ag.clienteId)
-    if (idx >= 0) {
-      lista[idx] = { ...lista[idx], atendimentos: [...(lista[idx].atendimentos || []), atendimento] }
-      setClientes(lista)
-    }
-
-    apiCall('salvarAtendimento', { atendimento }).then(r =>
-      showToast(r.ok ? '✅ Pagamento registrado!' : '💾 Salvo local')
-    )
-
-    const ags = [...agendamentos]
-    const agIdx = ags.findIndex(a => a.id === checkoutCob)
-    if (agIdx >= 0) {
-      ags[agIdx] = { ...ags[agIdx], status: 'pago' }
-      setAgendamentos(ags)
-      apiCall('atualizarAgendamento', { id: checkoutCob, campos: { status: 'pago' } })
-    }
-    setCheckoutCob(null)
+  function handleCobrar(dados: FechamentoDados) {
+    if (!checkoutId) return
+    const ag=agendamentos.find(a=>a.id===checkoutId); if (!ag) return
+    const dtObj=dataStrParaDate(formatarDataBR(ag.data))||new Date()
+    const at={ id:gerarId(), clienteId:ag.clienteId, data:formatarDataBR(ag.data), semana:getISOWeek(dtObj), mes:`${dtObj.getFullYear()}-${String(dtObj.getMonth()+1).padStart(2,'0')}`, ano:String(dtObj.getFullYear()), servicos:dados.svcs||ag.servico, valor:dados.valorOriginal, obs:ag.obsEncerramento||ag.obs||'', formaPagamento:dados.formaPagamento, parcelas:dados.parcelas, taxaPct:dados.taxaPct, valorCobrado:dados.valorCobrado, custoTaxa:dados.custoTaxa, valorLiquido:dados.liquido, divContas:dados.divisao.contas, divMaquinas:dados.divisao.maquinas, divEstoque:dados.divisao.estoque, divLucro:dados.divisao.lucro, criadoEm:hoje() }
+    const lista=[...clientes]; const idx=lista.findIndex(x=>x.id===ag.clienteId)
+    if (idx>=0) { lista[idx]={...lista[idx],atendimentos:[...(lista[idx].atendimentos||[]),at]}; setClientes(lista) }
+    apiCall('salvarAtendimento',{atendimento:at}).then(r=>showToast(r.ok?'✅ Pagamento registrado!':'💾 Salvo local'))
+    const ags=[...agendamentos]; const ai=ags.findIndex(a=>a.id===checkoutId)
+    if (ai>=0) { ags[ai]={...ags[ai],status:'pago'}; setAgendamentos(ags); apiCall('atualizarAgendamento',{id:checkoutId,campos:{status:'pago'}}) }
+    setCheckoutId(null)
   }
 
-  const agCobranca = checkoutCob ? agendamentos.find(a => a.id === checkoutCob) : null
+  const COR:Record<string,string>={agendado:'var(--verde)',concluido:'var(--alerta)',pago:'var(--azul)'}
+  const BADGE:Record<string,string>={agendado:'📅 Agendado',concluido:'⏳ Aguardando cobrança',pago:'✅ Pago'}
+  const selDayObj = days.find(d => dataISO(d) === selDay) || days[0]
 
   return (
     <div>
-      {/* Navegação semana */}
-      <div className="flex items-center justify-between mb-4">
-        <button onClick={() => setOffset(o => o - 1)}
-          className="w-10 h-10 flex items-center justify-center rounded-xl font-bebas text-2xl"
-          style={{ background: '#111', border: '1px solid var(--borda)', color: 'var(--verde)' }}>‹</button>
-        <div className="font-barlow font-bold text-sm tracking-widest text-center">
-          {primeiroDia.getDate()}/{String(primeiroDia.getMonth()+1).padStart(2,'0')} — {ultimoDia.getDate()}/{String(ultimoDia.getMonth()+1).padStart(2,'0')}
-        </div>
-        <button onClick={() => setOffset(o => o + 1)}
-          className="w-10 h-10 flex items-center justify-center rounded-xl font-bebas text-2xl"
-          style={{ background: '#111', border: '1px solid var(--borda)', color: 'var(--verde)' }}>›</button>
+      {/* Week nav */}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+        <button onClick={()=>setOffset(o=>o-1)} style={{ background:'var(--card)', border:'none', color:'#fff', fontSize:16, width:34, height:34, borderRadius:10, cursor:'pointer' }}>‹</button>
+        <span style={{ fontSize:13, fontWeight:600, color:'var(--dim)' }}>{days[0].getDate()}/{String(days[0].getMonth()+1).padStart(2,'0')} — {days[6].getDate()}/{String(days[6].getMonth()+1).padStart(2,'0')}</span>
+        <button onClick={()=>setOffset(o=>o+1)} style={{ background:'var(--card)', border:'none', color:'#fff', fontSize:16, width:34, height:34, borderRadius:10, cursor:'pointer' }}>›</button>
       </div>
 
-      {/* Dias */}
-      {dias.map(dia => {
-        const iso = dataISO(dia)
-        const diaAgs = agendamentos
-          .filter(a => String(a.data||'').trim() === iso || String(a.data||'').trim() === formatarDataBR(iso))
-          .sort((a,b) => a.hora.localeCompare(b.hora))
-        const ocupados = getSlotsOcupados(iso)
-        const slots = gerarTodosSlots()
-        const nomeDia = NOMES_DIA[dia.getDay()]
-        const isHoje = dataISO(new Date()) === iso
-
-        return (
-          <div key={iso} className="rounded-xl mb-3 overflow-hidden"
-            style={{ background: 'var(--card)', border: `1px solid ${isHoje ? 'var(--verde)' : 'var(--borda)'}` }}>
-            <div className="flex justify-between items-center px-4 py-3"
-              style={{ background: '#111', borderBottom: '1px solid var(--borda)' }}>
-              <div>
-                <span className="font-bebas text-lg tracking-wider"
-                  style={{ color: isHoje ? 'var(--verde)' : 'var(--texto)' }}>
-                  {nomeDia} <span style={{ color: 'var(--verde)' }}>{dia.getDate()}/{String(dia.getMonth()+1).padStart(2,'0')}</span>
-                </span>
-                {isHoje && (
-                  <span className="ml-2 px-1.5 py-0.5 rounded font-barlow text-[10px] font-bold"
-                    style={{ background: 'var(--verde)', color: '#000' }}>HOJE</span>
-                )}
-              </div>
-              <div className="font-barlow text-xs" style={{ color: 'var(--dim)' }}>
-                {diaAgs.length} agend.
-              </div>
+      {/* Day strip */}
+      <div style={{ display:'flex', gap:4, marginBottom:16, overflowX:'auto' }}>
+        {days.map(d => {
+          const iso=dataISO(d); const isToday=dataISO(new Date())===iso; const isSel=selDay===iso
+          const hasAg=agendamentos.some(a=>String(a.data||'').trim()===iso||String(a.data||'').trim()===formatarDataBR(iso))
+          return (
+            <div key={iso} onClick={()=>setSelDay(iso)} style={{
+              flexShrink:0, width:44, padding:'8px 2px', borderRadius:12, textAlign:'center', cursor:'pointer',
+              background: isSel ? 'var(--verde)' : isToday ? 'var(--verde-bg2)' : 'var(--card)',
+              border: isToday&&!isSel ? '1px solid var(--verde)' : '1px solid transparent',
+              transition:'all .15s'
+            }}>
+              <div style={{ fontSize:9, fontWeight:600, textTransform:'uppercase', color: isSel?'#000':isToday?'var(--verde)':'var(--dim)' }}>{DIAS_SEMANA[d.getDay()]}</div>
+              <div style={{ fontSize:16, fontWeight:700, color: isSel?'#000':'#fff', marginTop:2 }}>{d.getDate()}</div>
+              {hasAg && <div style={{ width:4, height:4, borderRadius:'50%', background:isSel?'#000':'var(--verde)', margin:'3px auto 0' }}/>}
             </div>
+          )
+        })}
+      </div>
 
-            {diaAgs.map(ag => {
-              const c = clientes.find(x => x.id === ag.clienteId)
-              const fim = minutosParaSlot(slotParaMinutos(ag.hora) + ag.duracao)
-              const status = ag.status || 'agendado'
-              const corMap: Record<string, string> = { agendado: 'var(--verde)', concluido: '#f0a500', pago: '#74b9ff' }
-              const bgMap: Record<string, string> = { agendado: 'rgba(170,255,0,.06)', concluido: 'rgba(240,165,0,.06)', pago: 'rgba(116,185,255,.06)' }
-              const badgeMap: Record<string, string> = { agendado: '📅 AGENDADO', concluido: '⏳ AGUARDANDO COBRANÇA', pago: '✅ PAGO' }
-              const cor = corMap[status] || 'var(--verde)'
-              const bg = bgMap[status] || 'transparent'
+      {/* Day label + add button */}
+      <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
+        <div style={{ fontSize:13, color:'var(--dim)', fontWeight:600 }}>
+          {DIAS_FULL[selDayObj.getDay()]}, {selDayObj.getDate()} de {selDayObj.toLocaleString('pt-BR',{month:'long'})}
+        </div>
+        <button onClick={()=>{ setAgData(selDay); setAgHora(''); setAgClienteId(clientes[0]?.id||''); setAgSvcId(SERVICOS[0].id); setAgObs(''); setAgValor(0); setModalAg(true) }}
+          style={{ background:'var(--verde)', color:'#000', fontSize:12, fontWeight:700, padding:'7px 14px', borderRadius:20, border:'none', cursor:'pointer', letterSpacing:0.5 }}>
+          + Agendar
+        </button>
+      </div>
 
-              return (
-                <div key={ag.id} className="px-4 py-3"
-                  style={{ borderBottom: '1px solid #1a1a1a', background: bg }}>
-                  <div className="flex justify-between items-start gap-2">
-                    <div className="flex-1">
-                      <div className="font-barlow font-bold text-sm uppercase" style={{ color: cor }}>
-                        {ag.hora} — {fim}
-                      </div>
-                      <div className="font-barlow text-sm mt-1">
-                        {primeiroNome(c?.nome) || 'Cliente'} · {ag.servico}
-                      </div>
-                      {ag.obs && (
-                        <div className="font-barlow text-xs mt-1" style={{ color: 'var(--dim)' }}>{ag.obs}</div>
-                      )}
-                      <div className="inline-block mt-2 px-2 py-0.5 rounded-full font-barlow text-[9px] font-bold tracking-wider"
-                        style={{ border: `1px solid ${cor}`, color: cor }}>
-                        {badgeMap[status] || status.toUpperCase()}
-                      </div>
-                    </div>
-                    <div className="flex-shrink-0 text-right min-w-[80px]">
-                      {parseValor(ag.valorAcordado) > 0 && (
-                        <div className="font-bebas text-xl leading-none mb-1" style={{ color: cor }}>
-                          R${parseValor(ag.valorAcordado).toFixed(0)}
-                        </div>
-                      )}
-                      {status === 'agendado' && (
-                        <button onClick={() => { setModalEnc(ag.id); setEncObs('') }}
-                          className="w-full py-1.5 px-3 rounded-lg font-barlow font-extrabold text-xs tracking-wider uppercase mb-1"
-                          style={{ background: 'var(--verde)', color: '#080808', border: 'none' }}>
-                          ENCERRAR
-                        </button>
-                      )}
-                      {status === 'concluido' && (
-                        <button onClick={() => setCheckoutCob(ag.id)}
-                          className="w-full py-1.5 px-3 rounded-lg font-barlow font-extrabold text-xs tracking-wider uppercase mb-1"
-                          style={{ background: '#f0a500', color: '#000', border: 'none' }}>
-                          💳 COBRAR
-                        </button>
-                      )}
-                      {status !== 'pago' && (
-                        <button onClick={() => cancelar(ag.id)}
-                          className="w-full py-1 px-3 rounded-lg font-barlow text-xs"
-                          style={{ background: 'transparent', border: '1px solid #333', color: 'var(--erro)' }}>
-                          cancelar
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-
-            <div className="p-3">
-              <div className="font-barlow text-[10px] tracking-[2px] uppercase mb-2" style={{ color: 'var(--dim)' }}>
-                Disponibilidade
-              </div>
-              <div className="grid grid-cols-4 gap-1">
-                {slots.map(slot => {
-                  const livre = !ocupados.has(slot)
-                  return (
-                    <button key={slot}
-                      onClick={() => livre && abrirModalAgendamento(iso, slot)}
-                      className="py-1.5 rounded-lg font-barlow font-bold text-xs text-center"
-                      style={{
-                        background: livre ? '#1a2600' : '#1a1a1a',
-                        border: `1px solid ${livre ? 'rgba(170,255,0,.3)' : '#222'}`,
-                        color: livre ? '#AAFF00' : '#333',
-                        cursor: livre ? 'pointer' : 'not-allowed'
-                      }}>
-                      {slot}
-                    </button>
-                  )
-                })}
+      {/* Agendamentos do dia */}
+      {selAgs.length === 0 ? (
+        <div style={{ textAlign:'center', padding:'32px 0', color:'var(--dim)', fontSize:13 }}>Nenhum agendamento neste dia</div>
+      ) : selAgs.map(ag => {
+        const c=clientes.find(x=>x.id===ag.clienteId)
+        const status=ag.status||'agendado'
+        const cor=COR[status]||'var(--verde)'
+        const fim=minSlot(slotMin(ag.hora)+ag.duracao)
+        return (
+          <div key={ag.id} style={{ background:'var(--card)', borderRadius:14, padding:14, marginBottom:8, borderLeft:`3px solid ${cor}` }}>
+            <div style={{ fontSize:12, color:cor, fontWeight:600 }}>{ag.hora} — {fim}</div>
+            <div style={{ fontSize:15, fontWeight:600, marginTop:3 }}>{primeiroNome(c?.nome)||'Cliente'}</div>
+            <div style={{ fontSize:13, color:'var(--dim)', marginTop:2 }}>{ag.servico}</div>
+            {ag.obs && <div style={{ fontSize:12, color:'var(--dim2)', marginTop:3 }}>{ag.obs}</div>}
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:10 }}>
+              <span style={{ fontSize:11, fontWeight:600, padding:'4px 10px', borderRadius:20, background:`${cor}18`, color:cor }}>{BADGE[status]||status}</span>
+              <div style={{ display:'flex', gap:6, alignItems:'center' }}>
+                {parseValor(ag.valorAcordado)>0 && <span style={{ fontSize:15, fontWeight:700, color:cor }}>R${parseValor(ag.valorAcordado).toFixed(0)}</span>}
+                {status==='agendado' && <button onClick={()=>{ setModalEnc(ag.id); setEncObs('') }} style={{ background:'var(--verde)', color:'#000', fontSize:11, fontWeight:700, padding:'7px 12px', borderRadius:8, border:'none', cursor:'pointer', letterSpacing:0.5 }}>ENCERRAR</button>}
+                {status==='concluido' && <button onClick={()=>setCheckoutId(ag.id)} style={{ background:'var(--alerta)', color:'#000', fontSize:11, fontWeight:700, padding:'7px 12px', borderRadius:8, border:'none', cursor:'pointer' }}>💳 COBRAR</button>}
+                {status!=='pago' && <button onClick={()=>cancelar(ag.id)} style={{ background:'transparent', border:'1px solid #333', color:'var(--erro)', fontSize:11, padding:'6px 10px', borderRadius:8, cursor:'pointer' }}>✕</button>}
               </div>
             </div>
           </div>
         )
       })}
 
-      {/* Modal Agendamento */}
+      {/* Slots disponíveis */}
+      <div style={{ marginTop:16 }}>
+        <div style={{ fontSize:11, color:'var(--dim)', fontWeight:600, letterSpacing:1, textTransform:'uppercase', marginBottom:8 }}>Disponibilidade</div>
+        <div style={{ display:'grid', gridTemplateColumns:'repeat(4,1fr)', gap:4 }}>
+          {allSlots().map(slot => {
+            const livre=!ocupados.has(slot)
+            return (
+              <button key={slot} onClick={()=>{ if(!livre) return; setAgData(selDay); setAgHora(slot); setAgClienteId(clientes[0]?.id||''); setAgSvcId(SERVICOS[0].id); setAgObs(''); setAgValor(0); setModalAg(true) }}
+                style={{ padding:'7px 2px', borderRadius:8, fontSize:11, fontWeight:600, textAlign:'center', background:livre?'var(--verde-bg2)':'#111', border:`1px solid ${livre?'rgba(170,255,0,.3)':'#1a1a1a'}`, color:livre?'var(--verde)':'#2a2a2a', cursor:livre?'pointer':'not-allowed' }}>
+                {slot}
+              </button>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Modal Agendar */}
       {modalAg && (
-        <div className="fixed inset-0 z-[10000] overflow-y-auto" style={{ background: '#080808' }}>
-          <div className="max-w-[500px] mx-auto p-4 pb-20">
-            <div className="flex justify-between items-center mb-5">
-              <div className="font-bebas text-2xl tracking-widest" style={{ color: 'var(--verde)' }}>
-                NOVO AGENDAMENTO
+        <div style={{ position:'fixed', inset:0, zIndex:10000, background:'#0a0a0a', overflowY:'auto' }}>
+          <div style={{ maxWidth:500, margin:'0 auto', padding:'16px 16px 60px' }}>
+            <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
+              <div style={{ fontSize:18, fontWeight:800 }}>NOVO AGENDAMENTO</div>
+              <button onClick={()=>setModalAg(false)} style={{ background:'#1a1a1a', border:'none', color:'#ccc', padding:'8px 14px', borderRadius:10, cursor:'pointer' }}>✕</button>
+            </div>
+            {[
+              { label:'Cliente', el: <select value={agClienteId} onChange={e=>setAgClienteId(e.target.value)} style={{ width:'100%', background:'var(--card)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none' }}>{clientes.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}</select> },
+              { label:'Serviço', el: <select value={agSvcId} onChange={e=>setAgSvcId(e.target.value)} style={{ width:'100%', background:'var(--card)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none' }}>{SERVICOS.map(s=><option key={s.id} value={s.id}>{s.nome}</option>)}</select> },
+            ].map(f=>(
+              <div key={f.label} style={{ marginBottom:12 }}>
+                <div style={{ fontSize:11, color:'var(--dim)', fontWeight:600, letterSpacing:1, textTransform:'uppercase', marginBottom:6 }}>{f.label}</div>
+                {f.el}
               </div>
-              <button onClick={() => setModalAg(false)}
-                className="px-4 py-2 rounded-lg font-barlow text-sm font-bold"
-                style={{ background: '#1c1c1c', border: '1px solid #333', color: '#ccc' }}>✕</button>
-            </div>
-
-            <div className="mb-3">
-              <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>
-                Cliente
-              </label>
-              <select value={agClienteId} onChange={e => setAgClienteId(e.target.value)}
-                className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-                style={{ background: '#111', border: '1px solid var(--borda)', color: 'var(--texto)' }}>
-                {clientes.map(c => <option key={c.id} value={c.id}>{c.nome}</option>)}
-              </select>
-            </div>
-
-            <div className="mb-3">
-              <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>
-                Serviço
-              </label>
-              <select value={agSvcId} onChange={e => setAgSvcId(e.target.value)}
-                className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-                style={{ background: '#111', border: '1px solid var(--borda)', color: 'var(--texto)' }}>
-                {SERVICOS.map(s => <option key={s.id} value={s.id}>{s.nome}</option>)}
-              </select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3 mb-3">
+            ))}
+            <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:12 }}>
               <div>
-                <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>
-                  Data
-                </label>
-                <input type="date" value={agData} onChange={e => setAgData(e.target.value)}
-                  className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-                  style={{ background: '#111', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
+                <div style={{ fontSize:11, color:'var(--dim)', fontWeight:600, letterSpacing:1, textTransform:'uppercase', marginBottom:6 }}>Data</div>
+                <input type="date" value={agData} onChange={e=>setAgData(e.target.value)} style={{ width:'100%', background:'var(--card)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none' }}/>
               </div>
               <div>
-                <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>
-                  Horário
-                </label>
-                <input type="time" value={agHora} onChange={e => setAgHora(e.target.value)}
-                  step="1800"
-                  className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-                  style={{ background: '#111', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
+                <div style={{ fontSize:11, color:'var(--dim)', fontWeight:600, letterSpacing:1, textTransform:'uppercase', marginBottom:6 }}>Horário</div>
+                <input type="time" value={agHora} onChange={e=>setAgHora(e.target.value)} step="1800" style={{ width:'100%', background:'var(--card)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none' }}/>
               </div>
             </div>
-
-            <div className="mb-3">
-              <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>
-                Valor acordado (R$)
-              </label>
-              <input type="number" value={agValorAcordado || ''}
-                onChange={e => setAgValorAcordado(Number(e.target.value))}
-                placeholder="0"
-                className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-                style={{ background: '#111', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
+            <div style={{ marginBottom:12 }}>
+              <div style={{ fontSize:11, color:'var(--dim)', fontWeight:600, letterSpacing:1, textTransform:'uppercase', marginBottom:6 }}>Valor acordado (R$)</div>
+              <input type="number" value={agValor||''} onChange={e=>setAgValor(Number(e.target.value))} placeholder="0" style={{ width:'100%', background:'var(--card)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none' }}/>
             </div>
-
-            <div className="mb-5">
-              <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>
-                Observações
-              </label>
-              <input type="text" value={agObs} onChange={e => setAgObs(e.target.value)}
-                placeholder="Observações opcionais..."
-                className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-                style={{ background: '#111', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
+            <div style={{ marginBottom:20 }}>
+              <div style={{ fontSize:11, color:'var(--dim)', fontWeight:600, letterSpacing:1, textTransform:'uppercase', marginBottom:6 }}>Observações</div>
+              <input type="text" value={agObs} onChange={e=>setAgObs(e.target.value)} placeholder="Opcional..." style={{ width:'100%', background:'var(--card)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none' }}/>
             </div>
-
-            <button onClick={confirmarAgendamento}
-              className="w-full py-4 rounded-xl font-barlow font-extrabold text-base tracking-widest uppercase"
-              style={{ background: 'var(--verde)', color: '#080808', border: 'none' }}>
-              CONFIRMAR AGENDAMENTO
-            </button>
+            <button onClick={confirmarAg} style={{ width:'100%', background:'var(--verde)', color:'#000', fontSize:15, fontWeight:700, padding:15, borderRadius:14, border:'none', cursor:'pointer', letterSpacing:1 }}>CONFIRMAR</button>
           </div>
         </div>
       )}
 
       {/* Modal Encerrar */}
       {modalEnc && (
-        <div className="fixed inset-0 z-[10001] flex items-end justify-center"
-          style={{ background: 'rgba(0,0,0,.8)' }}>
-          <div className="w-full max-w-[500px] rounded-t-2xl p-6 pb-10" style={{ background: '#111' }}>
-            <div className="font-bebas text-2xl tracking-widest mb-4" style={{ color: 'var(--verde)' }}>
-              ENCERRAR SERVIÇO
-            </div>
-            <div className="mb-4">
-              <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>
-                Observação (opcional)
-              </label>
-              <input type="text" value={encObs} onChange={e => setEncObs(e.target.value)}
-                placeholder="Ex: Cliente muito satisfeito..."
-                className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-                style={{ background: '#000', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => setModalEnc(null)}
-                className="flex-1 py-3 rounded-xl font-barlow font-bold text-sm tracking-widest uppercase"
-                style={{ border: '1px solid #333', color: '#777', background: 'transparent' }}>
-                Cancelar
-              </button>
-              <button onClick={confirmarEncerramento}
-                className="flex-1 py-3 rounded-xl font-barlow font-extrabold text-sm tracking-widest uppercase"
-                style={{ background: 'var(--verde)', color: '#080808', border: 'none' }}>
-                ENCERRAR
-              </button>
+        <div style={{ position:'fixed', inset:0, zIndex:10001, background:'rgba(0,0,0,.8)', display:'flex', alignItems:'flex-end', justifyContent:'center' }}>
+          <div style={{ width:'100%', maxWidth:500, background:'#111', borderRadius:'20px 20px 0 0', padding:'24px 20px 40px' }}>
+            <div style={{ fontSize:18, fontWeight:800, color:'var(--verde)', marginBottom:16 }}>ENCERRAR SERVIÇO</div>
+            <div style={{ fontSize:11, color:'var(--dim)', fontWeight:600, letterSpacing:1, textTransform:'uppercase', marginBottom:6 }}>Observação (opcional)</div>
+            <input type="text" value={encObs} onChange={e=>setEncObs(e.target.value)} placeholder="Ex: Cliente satisfeito..." style={{ width:'100%', background:'#000', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none', marginBottom:16 }}/>
+            <div style={{ display:'flex', gap:10 }}>
+              <button onClick={()=>setModalEnc(null)} style={{ flex:1, padding:13, borderRadius:12, border:'1px solid #333', background:'transparent', color:'#777', cursor:'pointer', fontWeight:600 }}>Cancelar</button>
+              <button onClick={confirmarEnc} style={{ flex:2, padding:13, borderRadius:12, background:'var(--verde)', color:'#000', border:'none', cursor:'pointer', fontWeight:700, fontSize:14, letterSpacing:1 }}>ENCERRAR</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Checkout Cobrança */}
-      {checkoutCob && agCobranca && (
-        <Checkout
-          valorInicial={parseValor(agCobranca.valorAcordado)}
-          svcsTexto={agCobranca.servico}
-          onConfirmar={handleCheckoutConfirm}
-          onCancelar={() => setCheckoutCob(null)}
-        />
+      {checkoutId && agendamentos.find(a=>a.id===checkoutId) && (
+        <Checkout valorInicial={parseValor(agendamentos.find(a=>a.id===checkoutId)!.valorAcordado)} svcsTexto={agendamentos.find(a=>a.id===checkoutId)!.servico} onConfirmar={handleCobrar} onCancelar={()=>setCheckoutId(null)}/>
       )}
     </div>
   )

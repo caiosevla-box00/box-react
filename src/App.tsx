@@ -4,7 +4,6 @@ import { useSync } from '@/hooks/useSync'
 import { Loading } from '@/components/ui/Loading'
 import { Toast } from '@/components/ui/Toast'
 import { Header } from '@/components/ui/Header'
-import { TabBar } from '@/components/ui/TabBar'
 import { Orcamento } from '@/components/tabs/Orcamento'
 import { Combos } from '@/components/tabs/Combos'
 import { Agenda } from '@/components/tabs/Agenda'
@@ -15,21 +14,18 @@ import { Config } from '@/components/tabs/Config'
 import { Diluidor } from '@/components/tabs/Diluidor'
 import { Checkout } from '@/components/modals/Checkout'
 import type { FechamentoDados } from '@/types'
-import { apiCall } from '@/lib/api'
-import { hoje, formatarDataBR, dataStrParaDate, gerarId, getISOWeek } from '@/lib/utils'
+import { gerarId, formatarDataBR, dataStrParaDate, getISOWeek, hoje } from '@/lib/utils'
 
 export default function App() {
   const { activeTab, loading, setTab, clientes, setClientes, agendamentos, setAgendamentos, showToast } = useStore()
   const { checkAPI } = useSync()
 
-  // Estado do checkout (orçamento → seletor cliente → agendamento)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [checkoutSvcs, setCheckoutSvcs] = useState<string[]>([])
   const [checkoutTotal, setCheckoutTotal] = useState(0)
-  const [checkoutDados, setCheckoutDados] = useState<FechamentoDados | null>(null)
-  const [seletorClienteOpen, setSeletorClienteOpen] = useState(false)
+  const [seletorOpen, setSeletorOpen] = useState(false)
   const [seletorBusca, setSeletorBusca] = useState('')
-  const [clienteSelecionado, setClienteSelecionado] = useState<string | null>(null)
+  const [checkoutDados, setCheckoutDados] = useState<FechamentoDados | null>(null)
 
   useEffect(() => { checkAPI() }, [])
 
@@ -42,26 +38,24 @@ export default function App() {
   function handleCheckoutConfirmar(dados: FechamentoDados) {
     setCheckoutDados(dados)
     setCheckoutOpen(false)
-    setSeletorClienteOpen(true)
+    setSeletorOpen(true)
     setSeletorBusca('')
   }
 
   function handleClienteSelecionado(clienteId: string) {
-    setClienteSelecionado(clienteId)
-    setSeletorClienteOpen(false)
-    // Vai para agenda para agendar
+    setSeletorOpen(false)
     setTab('agenda')
-    showToast('✅ Cliente selecionado! Agende o horário.')
+    showToast('✅ Selecione data e horário!')
   }
 
   const clientesFiltrados = seletorBusca
-    ? clientes.filter(c => c.nome?.toLowerCase().includes(seletorBusca.toLowerCase()) || c.tel?.includes(seletorBusca))
+    ? clientes.filter(c => c.nome?.toLowerCase().includes(seletorBusca.toLowerCase()) || (c.tel || '').includes(seletorBusca))
     : clientes
 
   const renderTab = () => {
     switch (activeTab) {
       case 'orcamento':  return <Orcamento onFechar={handleOrcamentoFechar} />
-      case 'combos':     return <Combos onSelecionarCombo={(svcs) => { setTab('orcamento') }} />
+      case 'combos':     return <Combos onSelecionarCombo={() => setTab('orcamento')} />
       case 'agenda':     return <Agenda />
       case 'clientes':   return <Clientes />
       case 'financeiro': return <Financeiro />
@@ -72,18 +66,22 @@ export default function App() {
     }
   }
 
+  // Header height: logo row ~52px + tab row ~56px = 108px
+  const HEADER_H = 108
+
   return (
-    <div className="relative min-h-screen max-w-[500px] mx-auto" style={{ background: '#080808' }}>
+    <div style={{ maxWidth: '500px', margin: '0 auto', minHeight: '100vh', background: 'var(--preto)', position: 'relative' }}>
       <Loading />
       <Toast />
 
       {!loading && (
         <>
           <Header />
-          <main style={{ paddingTop: '72px', paddingBottom: '80px', paddingLeft: '16px', paddingRight: '16px', minHeight: '100vh', overflowY: 'auto' }}>
-            {renderTab()}
+          <main style={{ paddingTop: `${HEADER_H}px`, paddingBottom: '24px', paddingLeft: '16px', paddingRight: '16px', minHeight: '100vh' }}>
+            <div className="animate-fadeUp" key={activeTab}>
+              {renderTab()}
+            </div>
           </main>
-          <TabBar />
         </>
       )}
 
@@ -98,28 +96,22 @@ export default function App() {
       )}
 
       {/* Seletor de cliente */}
-      {seletorClienteOpen && (
-        <div className="fixed inset-0 z-[10003] overflow-y-auto" style={{ background: '#080808' }}>
-          <div className="max-w-[500px] mx-auto p-4 pb-20">
-            <div className="flex justify-between items-center mb-5">
-              <div className="font-bebas text-2xl tracking-widest" style={{ color: 'var(--verde)' }}>SELECIONAR CLIENTE</div>
-              <button onClick={() => setSeletorClienteOpen(false)}
-                className="px-4 py-2 rounded-lg font-barlow text-sm font-bold"
-                style={{ background: '#1c1c1c', border: '1px solid #333', color: '#ccc' }}>✕</button>
+      {seletorOpen && (
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10003, background: 'var(--preto)', overflowY: 'auto' }}>
+          <div style={{ maxWidth: '500px', margin: '0 auto', padding: '20px 16px 40px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
+              <div style={{ fontSize: '18px', fontWeight: 700 }}>Selecionar Cliente</div>
+              <button onClick={() => setSeletorOpen(false)} style={{ background: '#1c1c1c', border: '1px solid #333', color: '#ccc', padding: '8px 14px', borderRadius: '10px', cursor: 'pointer' }}>✕</button>
             </div>
-            <div className="relative mb-4">
-              <input value={seletorBusca} onChange={e => setSeletorBusca(e.target.value)}
-                placeholder="Buscar cliente..."
-                className="w-full rounded-xl py-3 px-4 text-sm outline-none"
-                style={{ background: '#111', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
-            </div>
+            <input value={seletorBusca} onChange={e => setSeletorBusca(e.target.value)}
+              placeholder="Buscar cliente..."
+              style={{ width: '100%', background: 'var(--card)', border: '1px solid var(--borda)', borderRadius: '12px', padding: '12px 16px', color: 'var(--texto)', marginBottom: '12px', outline: 'none' }} />
             {clientesFiltrados.map(c => (
               <button key={c.id} onClick={() => handleClienteSelecionado(c.id)}
-                className="w-full text-left rounded-xl p-4 mb-2"
-                style={{ background: 'var(--card)', border: '1px solid var(--borda)' }}>
-                <div className="font-barlow font-bold text-base">{c.nome}</div>
-                <div className="font-barlow text-xs mt-1" style={{ color: 'var(--dim)' }}>
-                  {c.tel} {c.marca && `· ${c.marca} ${c.modelo}`}
+                style={{ width: '100%', textAlign: 'left', background: 'var(--card)', border: '1px solid var(--borda)', borderRadius: '14px', padding: '14px', marginBottom: '8px', cursor: 'pointer', color: 'var(--texto)' }}>
+                <div style={{ fontSize: '15px', fontWeight: 600 }}>{c.nome}</div>
+                <div style={{ fontSize: '12px', color: 'var(--dim)', marginTop: '3px' }}>
+                  {c.tel}{c.marca ? ` · ${c.marca} ${c.modelo || ''}` : ''}
                 </div>
               </button>
             ))}

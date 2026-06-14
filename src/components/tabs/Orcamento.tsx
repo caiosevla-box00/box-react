@@ -3,161 +3,129 @@ import { useStore } from '@/store'
 import { SERVICOS, CATEGORIAS } from '@/lib/servicos'
 import type { TipoVeiculo } from '@/types'
 
-interface OrcamentoProps {
-  onFechar: (svcs: string[], total: number) => void
-}
+interface Props { onFechar: (svcs: string[], total: number) => void }
 
-export function Orcamento({ onFechar }: OrcamentoProps) {
+const V: { id: TipoVeiculo; icon: string; label: string }[] = [
+  { id: 'hatch', icon: '🚗', label: 'Hatch' },
+  { id: 'sedan', icon: '🚙', label: 'Sedan' },
+  { id: 'suv',   icon: '🛻', label: 'SUV/Pick' },
+]
+
+export function Orcamento({ onFechar }: Props) {
   const { veiculo, setVeiculo, precos } = useStore()
-  const [selecionados, setSelecionados] = useState<Set<string>>(new Set())
+  const [sel, setSel] = useState<Set<string>>(new Set())
   const [delivery, setDelivery] = useState(false)
-  const [taxaDelivery, setTaxaDelivery] = useState(0)
+  const [taxaDel, setTaxaDel] = useState(0)
   const [desconto, setDesconto] = useState(0)
 
-  const getPreco = (svcId: string) => precos[svcId]?.[veiculo] ?? SERVICOS.find(s => s.id === svcId)?.base[veiculo] ?? 0
+  const getP = (id: string) => precos[id]?.[veiculo] ?? SERVICOS.find(s => s.id === id)?.base[veiculo] ?? 0
+  const subtotal = useMemo(() => Array.from(sel).reduce((a, id) => a + getP(id), 0), [sel, veiculo, precos])
+  const total = subtotal + (delivery ? taxaDel : 0) - desconto
 
-  const subtotal = useMemo(() =>
-    Array.from(selecionados).reduce((acc, id) => acc + getPreco(id), 0),
-    [selecionados, veiculo, precos]
-  )
-
-  const total = subtotal + (delivery ? taxaDelivery : 0) - desconto
-
-  function toggleServico(id: string) {
-    setSelecionados(prev => {
-      const next = new Set(prev)
-      next.has(id) ? next.delete(id) : next.add(id)
-      return next
-    })
-  }
-
-  function handleFechar() {
-    if (!selecionados.size) return
-    const svcsNomes = Array.from(selecionados).map(id => SERVICOS.find(s => s.id === id)?.nome ?? id)
-    onFechar(svcsNomes, total)
-  }
-
-  const veiculos: { id: TipoVeiculo; icon: string; label: string }[] = [
-    { id: 'hatch', icon: '🚗', label: 'Hatch' },
-    { id: 'sedan', icon: '🚙', label: 'Sedan' },
-    { id: 'suv',   icon: '🛻', label: 'SUV/Pick' },
-  ]
+  function tog(id: string) { setSel(p => { const n = new Set(p); n.has(id) ? n.delete(id) : n.add(id); return n }) }
 
   return (
     <div>
-      {/* Seletor de veículo */}
-      <div className="grid grid-cols-3 gap-2 mb-4">
-        {veiculos.map(v => (
-          <button key={v.id} onClick={() => setVeiculo(v.id)}
-            className="py-3 rounded-xl font-barlow font-bold text-sm tracking-wider uppercase transition-all"
-            style={{
-              background: veiculo === v.id ? 'var(--verde)' : '#111',
-              color: veiculo === v.id ? '#080808' : '#aaa',
-              border: `1px solid ${veiculo === v.id ? 'var(--verde)' : '#222'}`
-            }}>
-            {v.icon} {v.label}
-          </button>
+      {/* Veículo */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px', marginBottom: '20px' }}>
+        {V.map(v => (
+          <button key={v.id} onClick={() => setVeiculo(v.id)} style={{
+            padding: '11px 4px', borderRadius: 'var(--radius-md)', fontSize: '12px',
+            fontWeight: 600, border: 'none', cursor: 'pointer', transition: 'all .15s',
+            background: veiculo === v.id ? 'var(--verde)' : 'var(--card)',
+            color: veiculo === v.id ? '#000' : 'var(--dim)',
+            outline: veiculo === v.id ? 'none' : '1px solid var(--borda)',
+          }}>{v.icon} {v.label}</button>
         ))}
       </div>
 
-      {/* Serviços por categoria */}
+      {/* Serviços */}
       {CATEGORIAS.map(cat => (
-        <div key={cat.nome} className="mb-4">
-          <div className="font-barlow text-xs font-bold tracking-[2px] uppercase mb-2"
-            style={{ color: '#555' }}>
+        <div key={cat.nome}>
+          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--dim)', letterSpacing: '1px', textTransform: 'uppercase', margin: '16px 0 8px' }}>
             {cat.nome}
           </div>
-          <div className="space-y-2">
-            {cat.ids.map(id => {
-              const s = SERVICOS.find(x => x.id === id)!
-              const sel = selecionados.has(id)
-              const preco = getPreco(id)
-              return (
-                <button key={id} onClick={() => toggleServico(id)}
-                  className="w-full text-left rounded-xl p-3 transition-all"
-                  style={{
-                    background: sel ? 'rgba(170,255,0,.08)' : '#111',
-                    border: `1px solid ${sel ? 'var(--verde)' : '#222'}`
-                  }}>
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-start gap-3 flex-1">
-                      <div className="w-5 h-5 rounded flex items-center justify-center flex-shrink-0 mt-0.5"
-                        style={{ background: sel ? 'var(--verde)' : '#222', border: `1px solid ${sel ? 'var(--verde)' : '#444'}` }}>
-                        {sel && <span className="text-black text-xs">✓</span>}
-                      </div>
-                      <div>
-                        <div className="font-barlow font-bold text-sm tracking-wide">
-                          <span style={{ color: '#555' }}>{s.num} · </span>
-                          {s.nome}
-                        </div>
-                        <div className="font-barlow text-xs mt-1" style={{ color: '#555', lineHeight: 1.4 }}>
-                          {s.desc.split(' · ').slice(0,2).join(' · ')}
-                        </div>
-                        <div className="font-barlow text-xs mt-1" style={{ color: 'var(--verde-dim)' }}>
-                          ⏱ {s.tempo}
-                        </div>
-                      </div>
-                    </div>
-                    <div className="font-bebas text-xl flex-shrink-0" style={{ color: sel ? 'var(--verde)' : '#aaa' }}>
-                      R${preco}
-                    </div>
-                  </div>
-                </button>
-              )
-            })}
-          </div>
+          {cat.ids.map(id => {
+            const s = SERVICOS.find(x => x.id === id)!
+            const on = sel.has(id)
+            return (
+              <button key={id} onClick={() => tog(id)} style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: '12px',
+                padding: '14px', borderRadius: 'var(--radius-md)', marginBottom: '6px',
+                background: on ? 'var(--verde-bg)' : 'var(--card)',
+                border: `1.5px solid ${on ? 'var(--verde)' : 'var(--borda)'}`,
+                cursor: 'pointer', textAlign: 'left', transition: 'all .15s',
+              }}>
+                <div style={{
+                  width: '22px', height: '22px', borderRadius: '6px', flexShrink: 0,
+                  background: on ? 'var(--verde)' : 'transparent',
+                  border: `1.5px solid ${on ? 'var(--verde)' : '#333'}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '12px', color: '#000', fontWeight: 700,
+                }}>
+                  {on ? '✓' : ''}
+                </div>
+                <div style={{ flex: 1 }}>
+                  <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--texto)' }}>{s.nome}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--dim)', marginTop: '2px' }}>⏱ {s.tempo}</div>
+                </div>
+                <div style={{ fontSize: '17px', fontWeight: 700, color: on ? 'var(--verde)' : '#aaa', flexShrink: 0 }}>
+                  R${getP(id)}
+                </div>
+              </button>
+            )
+          })}
         </div>
       ))}
 
       {/* Delivery */}
-      <div className="rounded-xl p-4 mb-3" style={{ background: '#111', border: '1px solid #222' }}>
-        <div className="flex items-center justify-between">
+      <div style={{ background: 'var(--card)', border: '1px solid var(--borda)', borderRadius: 'var(--radius-md)', padding: '14px', marginTop: '16px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div className="font-barlow font-bold text-sm">🚚 DELIVERY</div>
-            <div className="font-barlow text-xs" style={{ color: '#555' }}>Adicionar taxa de deslocamento</div>
+            <div style={{ fontSize: '14px', fontWeight: 600 }}>🚚 Delivery</div>
+            <div style={{ fontSize: '12px', color: 'var(--dim)', marginTop: '2px' }}>Taxa de deslocamento</div>
           </div>
-          <button onClick={() => setDelivery(!delivery)}
-            className="w-12 h-6 rounded-full transition-all relative"
-            style={{ background: delivery ? 'var(--verde)' : '#333' }}>
-            <div className="absolute top-0.5 w-5 h-5 rounded-full bg-white transition-all"
-              style={{ left: delivery ? '24px' : '2px' }} />
+          <button onClick={() => setDelivery(!delivery)} style={{
+            width: '46px', height: '26px', borderRadius: '13px', border: 'none', cursor: 'pointer',
+            background: delivery ? 'var(--verde)' : '#333', position: 'relative', transition: 'background .2s',
+          }}>
+            <div style={{
+              position: 'absolute', top: '3px', width: '20px', height: '20px',
+              borderRadius: '50%', background: '#fff', transition: 'left .2s',
+              left: delivery ? '23px' : '3px',
+            }} />
           </button>
         </div>
         {delivery && (
-          <div className="mt-3 flex items-center gap-2">
-            <span className="font-barlow text-xs text-gray-400">R$</span>
-            <input type="number" value={taxaDelivery} onChange={e => setTaxaDelivery(Number(e.target.value))}
-              className="flex-1 bg-black rounded-lg px-3 py-2 font-bebas text-xl text-center outline-none"
-              style={{ border: '1px solid #333', color: 'var(--verde)' }} />
+          <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '14px', color: 'var(--dim)' }}>R$</span>
+            <input type="number" value={taxaDel || ''} onChange={e => setTaxaDel(Number(e.target.value))}
+              placeholder="0" style={{ flex: 1, background: '#000', border: '1px solid #333', borderRadius: '10px', padding: '10px 14px', color: 'var(--verde)', fontSize: '18px', fontWeight: 700, outline: 'none', textAlign: 'center' }} />
           </div>
         )}
       </div>
 
       {/* Desconto */}
-      <div className="rounded-xl p-4 mb-4 flex items-center gap-3" style={{ background: '#111', border: '1px solid #222' }}>
-        <span className="font-barlow text-sm font-bold tracking-wider uppercase" style={{ color: '#555' }}>DESCONTO R$</span>
+      <div style={{ background: 'var(--card)', border: '1px solid var(--borda)', borderRadius: 'var(--radius-md)', padding: '14px', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+        <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--dim)', flexShrink: 0 }}>Desconto R$</div>
         <input type="number" value={desconto || ''} onChange={e => setDesconto(Number(e.target.value))}
-          placeholder="0"
-          className="flex-1 bg-black rounded-lg px-3 py-2 font-bebas text-xl text-center outline-none"
-          style={{ border: '1px solid #333', color: '#f0f0f0' }} />
+          placeholder="0" style={{ flex: 1, background: '#000', border: '1px solid #333', borderRadius: '10px', padding: '10px 14px', color: 'var(--texto)', fontSize: '16px', outline: 'none', textAlign: 'center' }} />
       </div>
 
-      {/* Total + botão */}
-      {selecionados.size > 0 && (
-        <div className="sticky bottom-0 py-3" style={{ background: '#080808' }}>
-          <div className="flex items-center justify-between mb-3">
+      <div style={{ height: '100px' }} />
+
+      {/* Total bar */}
+      {sel.size > 0 && (
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxWidth: '500px', margin: '0 auto', background: '#111', borderTop: '1px solid var(--borda)', padding: '12px 16px 28px', zIndex: 90 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
             <div>
-              <div className="font-barlow text-xs tracking-widest uppercase" style={{ color: '#555' }}>Total</div>
-              <div className="font-bebas text-3xl" style={{ color: 'var(--verde)' }}>R${total}</div>
-            </div>
-            <div className="font-barlow text-xs text-right" style={{ color: '#555' }}>
-              {selecionados.size} serviço{selecionados.size !== 1 ? 's' : ''}
+              <div style={{ fontSize: '12px', color: 'var(--dim)' }}>{sel.size} serviço{sel.size !== 1 ? 's' : ''}</div>
+              <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--verde)', lineHeight: 1 }}>R${total}</div>
             </div>
           </div>
-          <button onClick={handleFechar}
-            className="w-full py-4 rounded-xl font-barlow font-extrabold text-lg tracking-widest uppercase"
-            style={{ background: 'var(--verde)', color: '#080808' }}>
-            FECHAR SERVIÇO
+          <button onClick={() => onFechar(Array.from(sel).map(id => SERVICOS.find(s => s.id === id)?.nome || id), total)}
+            style={{ width: '100%', background: 'var(--verde)', color: '#000', fontSize: '15px', fontWeight: 700, padding: '15px', borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer', letterSpacing: '1px' }}>
+            FECHAR SERVIÇO →
           </button>
         </div>
       )}
