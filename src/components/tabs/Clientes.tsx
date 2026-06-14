@@ -66,9 +66,9 @@ export function Clientes() {
   const perfil = perfilId ? clientes.find(x => x.id === perfilId) : null
 
   const S = { // styles
-    card: { background: 'var(--card)', border: '1.5px solid var(--borda)', borderRadius: 'var(--radius-md)', padding: '14px', marginBottom: '8px', cursor: 'pointer' } as React.CSSProperties,
+    card: { background: 'var(--surface)', border: '1.5px solid var(--borda)', borderRadius: 'var(--radius-md)', padding: '14px', marginBottom: '8px', cursor: 'pointer' } as React.CSSProperties,
     label: { fontSize: '11px', fontWeight: 600, color: '#777', letterSpacing: '1px', textTransform: 'uppercase' as const, display: 'block', marginBottom: '6px' },
-    input: { width: '100%', background: '#111', border: '1px solid var(--borda)', borderRadius: 'var(--radius-sm)', padding: '12px 14px', color: 'var(--texto)', outline: 'none' } as React.CSSProperties,
+    input: { width: '100%', background: 'var(--surface2)', border: '1px solid var(--borda)', borderRadius: 'var(--radius-sm)', padding: '12px 14px', color: 'var(--texto)', outline: 'none' } as React.CSSProperties,
   }
 
   return (
@@ -89,7 +89,7 @@ export function Clientes() {
           { v: `R$${totalFat.toFixed(0)}`, l: 'Faturado', i: '💰', c: 'var(--verde)' },
           { v: comAlerta, l: 'Retorno', i: '🔔', c: comAlerta > 0 ? 'var(--alerta)' : 'var(--verde)' },
         ].map((s, i) => (
-          <div key={i} style={{ background: 'var(--card)', borderRadius: 'var(--radius-sm)', padding: '12px 8px', textAlign: 'center' }}>
+          <div key={i} style={{ background: 'var(--surface)', borderRadius: 'var(--radius-sm)', padding: '12px 8px', textAlign: 'center' }}>
             <div style={{ fontSize: '20px' }}>{s.i}</div>
             <div style={{ fontSize: '17px', fontWeight: 700, color: s.c, marginTop: '4px' }}>{s.v}</div>
             <div style={{ fontSize: '10px', color: 'var(--dim)', marginTop: '2px' }}>{s.l}</div>
@@ -98,7 +98,7 @@ export function Clientes() {
       </div>
 
       {/* Busca */}
-      <div style={{ background: 'var(--card)', border: '1px solid var(--borda)', borderRadius: 'var(--radius-sm)', padding: '11px 14px', display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '14px' }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: 'var(--radius-sm)', padding: '11px 14px', display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '14px' }}>
         <span style={{ color: '#444', fontSize: '16px' }}>🔍</span>
         <input value={busca} onChange={e => setBusca(e.target.value)} placeholder="Buscar cliente..."
           style={{ background: 'none', border: 'none', color: 'var(--texto)', fontSize: '15px', width: '100%', outline: 'none' }} />
@@ -153,7 +153,7 @@ export function Clientes() {
 
       {/* Perfil */}
       {perfil && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'var(--preto)', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10000, background: 'var(--bg)', overflowY: 'auto' }}>
           <div style={{ maxWidth: '500px', margin: '0 auto', padding: '20px 16px 40px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div style={{ fontSize: '18px', fontWeight: 700 }}>Perfil</div>
@@ -203,7 +203,7 @@ export function Clientes() {
             {(perfil.atendimentos || []).length === 0 ? (
               <div style={{ textAlign: 'center', padding: '30px', color: 'var(--dim)', fontSize: '14px' }}>Nenhum atendimento registrado</div>
             ) : [...(perfil.atendimentos || [])].reverse().map((at, i) => (
-              <div key={i} style={{ background: 'var(--card)', border: '1px solid var(--borda)', borderRadius: 'var(--radius-md)', padding: '14px', marginBottom: '8px' }}>
+              <div key={i} style={{ background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: 'var(--radius-md)', padding: '14px', marginBottom: '8px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                   <div style={{ flex: 1 }}>
                     <div style={{ fontSize: '12px', color: 'var(--dim)' }}>{formatarDataBR(at.data)}</div>
@@ -222,7 +222,7 @@ export function Clientes() {
 
       {/* Modal cadastro */}
       {modalOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 10001, background: 'var(--preto)', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10001, background: 'var(--bg)', overflowY: 'auto' }}>
           <div style={{ maxWidth: '500px', margin: '0 auto', padding: '20px 16px 40px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div style={{ fontSize: '18px', fontWeight: 700 }}>{editId ? 'Editar Cliente' : 'Novo Cliente'}</div>

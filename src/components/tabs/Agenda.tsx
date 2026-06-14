@@ -33,6 +33,7 @@ export function Agenda() {
   const [agValor, setAgValor] = useState(0)
   const [agObs, setAgObs] = useState('')
   const [encObs, setEncObs] = useState('')
+  const [wppPendente, setWppPendente] = useState<{tel:string;msg:string;nome:string}|null>(null)
 
   const days = getWeekDays(offset)
 
@@ -62,7 +63,7 @@ export function Agenda() {
       const fim=minSlot(slotMin(agHora)+ag.duracao)
       const msg=`Olá ${primeiroNome(c.nome)}! 🚗✨\nSeu agendamento está confirmado!\n📅 ${nomeDia}, ${formatarDataBR(agData)}\n⏰ ${agHora} até ${fim}\n🔧 ${svc?.nome}\n📍 BOX 0.0 — Estética Automotiva\nQualquer dúvida é só chamar! 👋`
       const tel=(c.tel||'').replace(/\D/g,'')
-      setTimeout(()=>{ if(confirm(`Enviar confirmação WhatsApp para ${primeiroNome(c.nome)}?`)) window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`,'_blank') },400)
+      setWppPendente({ tel, msg, nome: primeiroNome(c.nome) })
     }
   }
 
@@ -80,7 +81,7 @@ export function Agenda() {
       const veiculo=[c.marca,c.modelo,c.cor].filter(Boolean).join(' ')
       const msg=`Olá ${primeiroNome(c.nome)}! 🏁\nSeu ${veiculo||'carro'} está pronto!\n✅ ${ag.servico} concluído\nPode vir buscar! 🚗✨\nBOX 0.0 — Estética Automotiva`
       const tel=(c.tel||'').replace(/\D/g,'')
-      setTimeout(()=>{ if(confirm(`Avisar conclusão WhatsApp para ${primeiroNome(c.nome)}?`)) window.open(`https://wa.me/55${tel}?text=${encodeURIComponent(msg)}`,'_blank') },500)
+      setWppPendente({ tel, msg, nome: primeiroNome(c.nome) })
     }
   }
 
@@ -248,6 +249,37 @@ export function Agenda() {
 
       {checkoutId && agendamentos.find(a=>a.id===checkoutId) && (
         <Checkout valorInicial={parseValor(agendamentos.find(a=>a.id===checkoutId)!.valorAcordado)} svcsTexto={agendamentos.find(a=>a.id===checkoutId)!.servico} onConfirmar={handleCobrar} onCancelar={()=>setCheckoutId(null)}/>
+      )}
+
+      {/* WhatsApp confirmation — direct click, sem setTimeout */}
+      {wppPendente && (
+        <div style={{ position:'fixed', inset:0, zIndex:10010, display:'flex', alignItems:'flex-end', justifyContent:'center', background:'rgba(0,0,0,.7)' }}
+          onClick={e => e.target === e.currentTarget && setWppPendente(null)}>
+          <div style={{ width:'100%', maxWidth:'500px', background:'var(--surface2)', borderRadius:'20px 20px 0 0', padding:'24px 20px 40px' }}>
+            <div style={{ fontSize:'16px', fontWeight:700, color:'var(--texto)', marginBottom:'6px' }}>
+              📲 Enviar WhatsApp
+            </div>
+            <div style={{ fontSize:'13px', color:'var(--dim)', marginBottom:'20px' }}>
+              Confirmar para {wppPendente.nome}?
+            </div>
+            <div style={{ background:'var(--surface)', border:'1px solid var(--borda)', borderRadius:'12px', padding:'14px', marginBottom:'16px', fontSize:'13px', color:'var(--texto2)', lineHeight:1.6, whiteSpace:'pre-line' }}>
+              {wppPendente.msg}
+            </div>
+            <div style={{ display:'flex', gap:'10px' }}>
+              <button onClick={() => setWppPendente(null)}
+                style={{ flex:1, padding:'13px', borderRadius:'12px', border:'1px solid var(--borda)', background:'transparent', color:'var(--dim)', fontSize:'14px', fontWeight:600, cursor:'pointer' }}>
+                Agora não
+              </button>
+              <button onClick={() => {
+                window.open(`https://wa.me/55${wppPendente.tel}?text=${encodeURIComponent(wppPendente.msg)}`, '_blank')
+                setWppPendente(null)
+              }}
+                style={{ flex:2, padding:'13px', borderRadius:'12px', border:'none', background:'#25D366', color:'#fff', fontSize:'14px', fontWeight:700, cursor:'pointer' }}>
+                📲 Enviar
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )

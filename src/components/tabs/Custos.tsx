@@ -53,19 +53,19 @@ export function Custos() {
       <div className="font-bebas text-2xl tracking-widest mb-1" style={{ color: 'var(--verde)' }}>Custos</div>
       <div className="font-barlow text-xs tracking-widest uppercase mb-4" style={{ color: '#555' }}>Calculadora de custos operacionais</div>
 
-      <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--card)', border: '1px solid var(--borda)' }}>
+      <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--surface)', border: '1px solid var(--borda)' }}>
         {campos.map((c, i) => (
           <div key={i} className="mb-3">
             <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>{c.label}</label>
             <input type="number" value={c.val} onChange={e => c.set(e.target.value)} placeholder={c.placeholder}
               className="w-full rounded-xl px-4 py-3 font-bebas text-2xl outline-none"
-              style={{ background: '#000', border: '1px solid #333', color: 'var(--verde)' }} />
+              style={{ background: 'var(--bg)', border: '1px solid #333', color: 'var(--verde)' }} />
           </div>
         ))}
       </div>
 
       {/* Resultado */}
-      <div className="rounded-xl p-4 mb-5" style={{ background: 'var(--card)', border: '2px solid var(--verde)' }}>
+      <div className="rounded-xl p-4 mb-5" style={{ background: 'var(--surface)', border: '2px solid var(--verde)' }}>
         <div className="font-barlow font-bold text-xs tracking-[2px] uppercase mb-3" style={{ color: 'var(--verde)' }}>📊 Custo por Atendimento</div>
         {[
           { label: 'Custo por km', val: `R$${custoPorKm.toFixed(2)}` },

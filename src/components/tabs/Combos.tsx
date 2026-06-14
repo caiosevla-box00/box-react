@@ -28,7 +28,7 @@ export function Combos({ onSelecionarCombo }: CombosProps) {
 
         return (
           <div key={combo.id} className="rounded-xl p-4 mb-3"
-            style={{ background: 'var(--card)', border: '1px solid var(--borda)' }}>
+            style={{ background: 'var(--surface)', border: '1px solid var(--borda)' }}>
             <div className="flex justify-between items-start mb-2">
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">

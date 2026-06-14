@@ -55,7 +55,7 @@ export function Checkout({ valorInicial, svcsTexto, onConfirmar, onCancelar }: C
   }
 
   return (
-    <div className="fixed inset-0 z-[10002] overflow-y-auto" style={{ background: '#080808' }}>
+    <div className="fixed inset-0 z-[10002] overflow-y-auto" style={{ background: 'var(--bg)' }}>
       <div className="max-w-[500px] mx-auto p-4 pb-20">
         <div className="flex justify-between items-center mb-5">
           <div className="font-bebas text-2xl tracking-widest" style={{ color: 'var(--verde)' }}>FECHAR SERVIÇO</div>
@@ -64,14 +64,14 @@ export function Checkout({ valorInicial, svcsTexto, onConfirmar, onCancelar }: C
         </div>
 
         {/* Valor */}
-        <div className="rounded-xl p-4 mb-4 text-center" style={{ background: 'var(--card)', border: '2px solid var(--verde)' }}>
+        <div className="rounded-xl p-4 mb-4 text-center" style={{ background: 'var(--surface)', border: '2px solid var(--verde)' }}>
           <div className="font-barlow text-xs tracking-widest uppercase mb-1" style={{ color: '#555' }}>Valor do serviço</div>
           <div className="font-bebas text-5xl" style={{ color: 'var(--verde)' }}>R${valorInicial}</div>
           <div className="font-barlow text-xs mt-1" style={{ color: '#555' }}>{svcsTexto}</div>
         </div>
 
         {/* Forma de pagamento */}
-        <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--card)', border: '1px solid var(--borda)' }}>
+        <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--surface)', border: '1px solid var(--borda)' }}>
           <div className="font-barlow font-bold text-sm tracking-wider uppercase mb-3" style={{ color: 'var(--verde)' }}>
             💳 Forma de Pagamento
           </div>
@@ -120,12 +120,12 @@ export function Checkout({ valorInicial, svcsTexto, onConfirmar, onCancelar }: C
             <input type="number" value={taxaManual} onChange={e => setTaxaManual(e.target.value === '' ? '' : Number(e.target.value))}
               placeholder="Automático"
               className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-              style={{ background: '#000', border: '1px solid #333', color: 'var(--verde)' }} />
+              style={{ background: 'var(--bg)', border: '1px solid #333', color: 'var(--verde)' }} />
           </div>
         </div>
 
         {/* Resultado */}
-        <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--card)', border: '1px solid var(--borda)' }}>
+        <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--surface)', border: '1px solid var(--borda)' }}>
           <div className="font-barlow font-bold text-sm tracking-wider uppercase mb-3" style={{ color: 'var(--verde)' }}>
             📊 Resumo Financeiro
           </div>
@@ -148,7 +148,7 @@ export function Checkout({ valorInicial, svcsTexto, onConfirmar, onCancelar }: C
         </div>
 
         {/* Divisão de fundos */}
-        <div className="rounded-xl p-4 mb-5" style={{ background: 'var(--card)', border: '1px solid var(--borda)' }}>
+        <div className="rounded-xl p-4 mb-5" style={{ background: 'var(--surface)', border: '1px solid var(--borda)' }}>
           <div className="font-barlow font-bold text-sm tracking-wider uppercase mb-3" style={{ color: 'var(--verde)' }}>
             💰 Divisão dos Fundos
           </div>
@@ -165,11 +165,27 @@ export function Checkout({ valorInicial, svcsTexto, onConfirmar, onCancelar }: C
           ))}
         </div>
 
-        <button onClick={confirmar}
-          className="w-full py-4 rounded-xl font-barlow font-extrabold text-lg tracking-widest uppercase"
-          style={{ background: 'var(--verde)', color: '#080808', border: 'none' }}>
-          CONFIRMAR PAGAMENTO
-        </button>
+        <div style={{ display:'flex', gap:'8px' }}>
+          <button onClick={async () => {
+            const { gerarOrcamentoPDF } = await import('@/lib/orcamentoPDF')
+            gerarOrcamentoPDF({
+              servicos: svcsTexto.split(' + ').map(n => ({ nome: n, preco: valorInicial, tempo: '' })),
+              total: valorInicial,
+              formaPagamento: forma,
+              parcelas,
+              valorCobrado,
+              taxaPct: taxa,
+              data: new Date().toLocaleDateString('pt-BR'),
+            })
+          }}
+            style={{ flex:1, padding:'15px', borderRadius:'var(--radius-md)', border:'1px solid var(--verde)', background:'transparent', color:'var(--verde)', fontSize:'14px', fontWeight:700, cursor:'pointer' }}>
+            📄 PDF
+          </button>
+          <button onClick={confirmar}
+            style={{ flex:3, padding:'15px', borderRadius:'var(--radius-md)', background:'var(--verde)', color:'#000', border:'none', fontSize:'15px', fontWeight:700, cursor:'pointer' }}>
+            CONFIRMAR PAGAMENTO
+          </button>
+        </div>
       </div>
     </div>
   )

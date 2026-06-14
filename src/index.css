@@ -6,50 +6,69 @@
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
 
+/* DARK MODE (default) */
 :root {
   --verde:     #AAFF00;
   --verde-dim: #5abf00;
   --verde-bg:  #0d1a00;
-  --preto:     #0a0a0a;
-  --card:      #141414;
-  --card2:     #111111;
+  --bg:        #0a0a0a;
+  --surface:   #141414;
+  --surface2:  #111111;
   --borda:     #1e1e1e;
-  --dim:       #555555;
+  --dim:       #666666;
   --texto:     #f0f0f0;
+  --texto2:    #aaaaaa;
   --alerta:    #f0a500;
   --erro:      #ff6b6b;
   --azul:      #74b9ff;
   --roxo:      #a29bfe;
   --rosa:      #fd79a8;
-  --topbar-h:  108px;
   --radius-sm: 10px;
   --radius-md: 14px;
   --radius-lg: 18px;
+  --header-h:  120px;
+}
+
+/* LIGHT MODE */
+[data-theme="light"] {
+  --verde:     #3a9400;
+  --verde-dim: #2d7300;
+  --verde-bg:  #f0fff0;
+  --bg:        #f5f5f5;
+  --surface:   #ffffff;
+  --surface2:  #f8f8f8;
+  --borda:     #e0e0e0;
+  --dim:       #999999;
+  --texto:     #111111;
+  --texto2:    #555555;
+  --alerta:    #d4840a;
+  --erro:      #cc2222;
+  --azul:      #1a6fd8;
+  --roxo:      #6c5ce7;
+  --rosa:      #e84393;
 }
 
 html, body, #root {
   height: 100%;
-  background: var(--preto);
+  background: var(--bg);
   color: var(--texto);
   font-family: 'Inter', -apple-system, sans-serif;
   overflow-x: hidden;
   -webkit-font-smoothing: antialiased;
+  transition: background .3s, color .3s;
 }
 
 ::-webkit-scrollbar { width: 0; height: 0; }
 
 @keyframes fadeUp {
-  from { opacity: 0; transform: translateY(10px); }
+  from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }
 }
 @keyframes pulsVerde {
   0%,100% { box-shadow: 0 0 0 0 rgba(170,255,0,.3); }
   50%     { box-shadow: 0 0 0 12px rgba(170,255,0,0); }
 }
-@keyframes spin { to { transform: rotate(360deg); } }
 
 .animate-fadeUp { animation: fadeUp .2s ease both; }
-.animate-pulse-verde { animation: pulsVerde 2s ease-in-out infinite; }
-
 button:active { transform: scale(0.97); transition: transform .1s; }
 input, select, textarea { font-size: 16px; font-family: 'Inter', sans-serif; }

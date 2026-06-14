@@ -71,7 +71,7 @@ export function Diluidor() {
             <div key={i} className="relative">
               <button onClick={() => usarProduto(p)}
                 className="font-barlow text-xs font-bold tracking-wider uppercase px-3 py-2 rounded-lg"
-                style={{ background: '#111', border: '1px solid #333', color: '#ccc' }}>
+                style={{ background: 'var(--surface2)', border: '1px solid #333', color: '#ccc' }}>
                 {p.nome} <span style={{ color: 'var(--verde)' }}>1:{p.parteAgua}</span>
               </button>
               <button onClick={() => removerProduto(i)}
@@ -88,7 +88,7 @@ export function Diluidor() {
       </div>
 
       {/* Calculadora */}
-      <div className="rounded-xl p-4" style={{ background: '#111', border: '1px solid #222' }}>
+      <div className="rounded-xl p-4" style={{ background: 'var(--surface2)', border: '1px solid #222' }}>
         <div className="font-barlow font-bold text-sm tracking-wider uppercase mb-4" style={{ color: 'var(--verde)' }}>
           ⚗️ Calcular Diluição
         </div>
@@ -101,7 +101,7 @@ export function Diluidor() {
             <input type="number" value={parteProd} min={1}
               onChange={e => setParteProd(Number(e.target.value))}
               className="w-full rounded-lg p-3 font-bebas text-3xl text-center outline-none"
-              style={{ background: '#000', border: '1px solid #333', color: 'var(--verde)' }} />
+              style={{ background: 'var(--bg)', border: '1px solid #333', color: 'var(--verde)' }} />
           </div>
           <div>
             <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#555' }}>
@@ -110,7 +110,7 @@ export function Diluidor() {
             <input type="number" value={parteAgua} min={1}
               onChange={e => setParteAgua(Number(e.target.value))}
               className="w-full rounded-lg p-3 font-bebas text-3xl text-center outline-none"
-              style={{ background: '#000', border: '1px solid #333', color: 'var(--azul)' }} />
+              style={{ background: 'var(--bg)', border: '1px solid #333', color: 'var(--azul)' }} />
           </div>
         </div>
 
@@ -121,7 +121,7 @@ export function Diluidor() {
           <input type="number" value={volume} min={1}
             onChange={e => setVolume(Number(e.target.value))}
             className="w-full rounded-lg p-3 font-bebas text-4xl text-center outline-none"
-            style={{ background: '#000', border: '1px solid #333', color: '#f0f0f0' }} />
+            style={{ background: 'var(--bg)', border: '1px solid #333', color: '#f0f0f0' }} />
         </div>
 
         {/* Atalhos de volume */}
@@ -143,11 +143,11 @@ export function Diluidor() {
         <div className="rounded-xl p-4 text-center" style={{ background: 'rgba(170,255,0,.05)', border: '1px solid rgba(170,255,0,.2)' }}>
           <div className="font-barlow text-xs tracking-[2px] uppercase mb-3" style={{ color: '#555' }}>RESULTADO</div>
           <div className="grid grid-cols-2 gap-3 mb-3">
-            <div className="rounded-lg p-3" style={{ background: '#111' }}>
+            <div className="rounded-lg p-3" style={{ background: 'var(--surface2)' }}>
               <div className="font-bebas text-4xl" style={{ color: 'var(--verde)' }}>{fmt(mlProd)}</div>
               <div className="font-barlow text-xs tracking-wider uppercase mt-1" style={{ color: '#555' }}>🧴 Produto</div>
             </div>
-            <div className="rounded-lg p-3" style={{ background: '#111' }}>
+            <div className="rounded-lg p-3" style={{ background: 'var(--surface2)' }}>
               <div className="font-bebas text-4xl" style={{ color: 'var(--azul)' }}>{fmt(mlAgua)}</div>
               <div className="font-barlow text-xs tracking-wider uppercase mt-1" style={{ color: '#555' }}>💧 Água</div>
             </div>
@@ -164,7 +164,7 @@ export function Diluidor() {
           style={{ background: 'rgba(0,0,0,.8)' }}
           onClick={e => e.target === e.currentTarget && setModalOpen(false)}>
           <div className="w-full max-w-[500px] rounded-t-2xl p-6 pb-10"
-            style={{ background: '#111' }}>
+            style={{ background: 'var(--surface2)' }}>
             <div className="font-bebas text-2xl tracking-widest mb-4" style={{ color: 'var(--verde)' }}>
               Salvar Produto
             </div>
@@ -175,7 +175,7 @@ export function Diluidor() {
               <input value={novoNome} onChange={e => setNovoNome(e.target.value)}
                 placeholder="Ex: APC, Shampoo, Pretinho..."
                 className="w-full rounded-lg px-4 py-3 text-base outline-none"
-                style={{ background: '#000', border: '1px solid #333', color: '#f0f0f0' }} />
+                style={{ background: 'var(--bg)', border: '1px solid #333', color: '#f0f0f0' }} />
             </div>
             <div className="font-barlow text-xs mb-4" style={{ color: '#555' }}>
               Proporção: 1:{parteAgua} (valores atuais da calculadora)

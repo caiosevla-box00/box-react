@@ -79,7 +79,7 @@ export function Orcamento({ onFechar }: Props) {
       ))}
 
       {/* Delivery */}
-      <div style={{ background: 'var(--card)', border: '1px solid var(--borda)', borderRadius: 'var(--radius-md)', padding: '14px', marginTop: '16px' }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: 'var(--radius-md)', padding: '14px', marginTop: '16px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <div style={{ fontSize: '14px', fontWeight: 600 }}>🚚 Delivery</div>
@@ -100,23 +100,23 @@ export function Orcamento({ onFechar }: Props) {
           <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '14px', color: 'var(--dim)' }}>R$</span>
             <input type="number" value={taxaDel || ''} onChange={e => setTaxaDel(Number(e.target.value))}
-              placeholder="0" style={{ flex: 1, background: '#000', border: '1px solid #333', borderRadius: '10px', padding: '10px 14px', color: 'var(--verde)', fontSize: '18px', fontWeight: 700, outline: 'none', textAlign: 'center' }} />
+              placeholder="0" style={{ flex: 1, background: 'var(--bg)', border: '1px solid #333', borderRadius: '10px', padding: '10px 14px', color: 'var(--verde)', fontSize: '18px', fontWeight: 700, outline: 'none', textAlign: 'center' }} />
           </div>
         )}
       </div>
 
       {/* Desconto */}
-      <div style={{ background: 'var(--card)', border: '1px solid var(--borda)', borderRadius: 'var(--radius-md)', padding: '14px', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: 'var(--radius-md)', padding: '14px', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--dim)', flexShrink: 0 }}>Desconto R$</div>
         <input type="number" value={desconto || ''} onChange={e => setDesconto(Number(e.target.value))}
-          placeholder="0" style={{ flex: 1, background: '#000', border: '1px solid #333', borderRadius: '10px', padding: '10px 14px', color: 'var(--texto)', fontSize: '16px', outline: 'none', textAlign: 'center' }} />
+          placeholder="0" style={{ flex: 1, background: 'var(--bg)', border: '1px solid #333', borderRadius: '10px', padding: '10px 14px', color: 'var(--texto)', fontSize: '16px', outline: 'none', textAlign: 'center' }} />
       </div>
 
       <div style={{ height: '100px' }} />
 
       {/* Total bar */}
       {sel.size > 0 && (
-        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxWidth: '500px', margin: '0 auto', background: '#111', borderTop: '1px solid var(--borda)', padding: '12px 16px 28px', zIndex: 90 }}>
+        <div style={{ position: 'fixed', bottom: 0, left: 0, right: 0, maxWidth: '500px', margin: '0 auto', background: 'var(--surface2)', borderTop: '1px solid var(--borda)', padding: '12px 16px 28px', zIndex: 90 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
             <div>
               <div style={{ fontSize: '12px', color: 'var(--dim)' }}>{sel.size} serviço{sel.size !== 1 ? 's' : ''}</div>

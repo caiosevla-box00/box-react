@@ -153,10 +153,10 @@ export function Financeiro() {
         <div className="grid grid-cols-2 gap-2 mb-3">
           <input type="date" value={customIni} onChange={e => setCustomIni(e.target.value)}
             className="rounded-xl px-3 py-2 text-sm outline-none"
-            style={{ background: '#111', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
+            style={{ background: 'var(--surface2)', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
           <input type="date" value={customFim} onChange={e => setCustomFim(e.target.value)}
             className="rounded-xl px-3 py-2 text-sm outline-none"
-            style={{ background: '#111', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
+            style={{ background: 'var(--surface2)', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
         </div>
       )}
 
@@ -177,7 +177,7 @@ export function Financeiro() {
           { icon: '⬇️', label: 'Saídas', val: totalSaidas, cor: '#ff6b6b' },
           { icon: '💵', label: 'Lucro', val: lucroReal, cor: lucroReal >= 0 ? 'var(--verde)' : '#ff6b6b' },
         ].map((c, i) => (
-          <div key={i} className="rounded-xl p-3 text-center" style={{ background: 'var(--card)', border: '1px solid var(--borda)' }}>
+          <div key={i} className="rounded-xl p-3 text-center" style={{ background: 'var(--surface)', border: '1px solid var(--borda)' }}>
             <div className="text-lg">{c.icon}</div>
             <div className="font-bebas text-xl leading-none mt-1" style={{ color: c.cor }}>R${c.val.toFixed(0)}</div>
             <div className="font-barlow text-[10px] uppercase tracking-wider mt-1" style={{ color: 'var(--dim)' }}>{c.label}</div>
@@ -186,7 +186,7 @@ export function Financeiro() {
       </div>
 
       {/* DRE */}
-      <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--card)', border: '1px solid var(--borda)' }}>
+      <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--surface)', border: '1px solid var(--borda)' }}>
         <div className="font-barlow font-bold text-xs tracking-[2px] uppercase mb-3" style={{ color: 'var(--verde)' }}>📋 DRE — Demonstrativo</div>
         {[
           { label: 'Receita Bruta (cobrado)', val: receitaBruta, cor: '#f0f0f0', neg: false, bold: false },
@@ -213,7 +213,7 @@ export function Financeiro() {
       </div>
 
       {/* Meta */}
-      <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--card)', border: '1px solid var(--borda)' }}>
+      <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--surface)', border: '1px solid var(--borda)' }}>
         <div className="flex justify-between items-center mb-3">
           <div className="font-barlow font-bold text-xs tracking-[2px] uppercase" style={{ color: 'var(--verde)' }}>🎯 Meta de Caixa</div>
           <button onClick={() => setEditMeta(!editMeta)} className="font-barlow text-xs tracking-wider uppercase px-2 py-1 rounded-lg"
@@ -223,7 +223,7 @@ export function Financeiro() {
           <div className="flex gap-2 mb-3">
             <input type="number" value={metaInput} onChange={e => setMetaInput(e.target.value)}
               className="flex-1 rounded-xl px-4 py-2 text-sm outline-none"
-              style={{ background: '#000', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
+              style={{ background: 'var(--bg)', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
             <button onClick={() => { setMeta(Number(metaInput)); setEditMeta(false) }}
               className="px-4 py-2 rounded-xl font-barlow font-bold text-sm"
               style={{ background: 'var(--verde)', color: '#080808', border: 'none' }}>OK</button>
@@ -233,7 +233,7 @@ export function Financeiro() {
           <span className="font-barlow text-sm" style={{ color: '#aaa' }}>Meta mensal: <strong style={{ color: 'var(--texto)' }}>R${meta.toFixed(0)}</strong></span>
           <span className="font-bebas text-xl" style={{ color: corMeta }}>{metaPct.toFixed(0)}%</span>
         </div>
-        <div className="h-2 rounded-full" style={{ background: '#1a1a1a' }}>
+        <div className="h-2 rounded-full" style={{ background: 'var(--surface2)' }}>
           <div className="h-full rounded-full transition-all duration-500" style={{ width: `${metaPct}%`, background: corMeta }} />
         </div>
         <div className="font-barlow text-xs mt-1" style={{ color: '#555' }}>
@@ -242,7 +242,7 @@ export function Financeiro() {
       </div>
 
       {/* Divisão de fundos */}
-      <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--card)', border: '1px solid var(--borda)' }}>
+      <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--surface)', border: '1px solid var(--borda)' }}>
         <div className="font-barlow font-bold text-xs tracking-[2px] uppercase mb-3" style={{ color: 'var(--verde)' }}>💰 Divisão dos Fundos</div>
         {[
           { label: '🏠 Contas Fixas', pct: divisao.contas, cor: '#74b9ff' },
@@ -255,7 +255,7 @@ export function Financeiro() {
               <span className="font-barlow text-sm">{f.label} ({f.pct}%)</span>
               <span className="font-bebas text-xl" style={{ color: f.cor }}>R${(totalLiquido * f.pct / 100).toFixed(2)}</span>
             </div>
-            <div className="h-1.5 rounded-full" style={{ background: '#1a1a1a' }}>
+            <div className="h-1.5 rounded-full" style={{ background: 'var(--surface2)' }}>
               <div className="h-full rounded-full opacity-70" style={{ width: `${f.pct}%`, background: f.cor }} />
             </div>
           </div>
@@ -263,7 +263,7 @@ export function Financeiro() {
       </div>
 
       {/* Gráfico */}
-      <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--card)', border: '1px solid var(--borda)' }}>
+      <div className="rounded-xl p-4 mb-4" style={{ background: 'var(--surface)', border: '1px solid var(--borda)' }}>
         <div className="font-barlow font-bold text-xs tracking-[2px] uppercase mb-4" style={{ color: 'var(--verde)' }}>
           📊 Faturamento por período
         </div>
@@ -317,7 +317,7 @@ export function Financeiro() {
           <div className="text-center py-6 font-barlow text-sm" style={{ color: 'var(--dim)' }}>Nenhuma saída no período</div>
         ) : [...saidasFil].reverse().map(s => (
           <div key={s.id} className="flex justify-between items-center rounded-xl p-3 mb-2"
-            style={{ background: 'var(--card)', border: '1px solid var(--borda)' }}>
+            style={{ background: 'var(--surface)', border: '1px solid var(--borda)' }}>
             <div>
               <div className="font-barlow text-sm">{s.desc}</div>
               <div className="font-barlow text-xs mt-0.5" style={{ color: 'var(--dim)' }}>{formatarDataBR(String(s.data))}</div>
@@ -338,7 +338,7 @@ export function Financeiro() {
         {atends.length === 0 ? (
           <div className="text-center py-6 font-barlow text-sm" style={{ color: 'var(--dim)' }}>Nenhum atendimento no período</div>
         ) : [...atends].reverse().map((a, i) => (
-          <div key={i} className="rounded-xl p-3 mb-2" style={{ background: 'var(--card)', border: '1px solid var(--borda)' }}>
+          <div key={i} className="rounded-xl p-3 mb-2" style={{ background: 'var(--surface)', border: '1px solid var(--borda)' }}>
             <div className="flex justify-between items-start">
               <div>
                 <div className="font-barlow font-bold text-sm uppercase">{a.nomeCliente || 'Cliente'}</div>
@@ -358,26 +358,26 @@ export function Financeiro() {
       {/* Modal Saída */}
       {modalSaida && (
         <div className="fixed inset-0 z-[10001] flex items-end justify-center" style={{ background: 'rgba(0,0,0,.8)' }}>
-          <div className="w-full max-w-[500px] rounded-t-2xl p-6 pb-10" style={{ background: '#111' }}>
+          <div className="w-full max-w-[500px] rounded-t-2xl p-6 pb-10" style={{ background: 'var(--surface2)' }}>
             <div className="font-bebas text-2xl tracking-widest mb-4" style={{ color: 'var(--verde)' }}>NOVA SAÍDA</div>
             <div className="mb-3">
               <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>Descrição</label>
               <input value={saidaDesc} onChange={e => setSaidaDesc(e.target.value)} placeholder="Ex: Shampoo, Microfibra..."
                 className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-                style={{ background: '#000', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
+                style={{ background: 'var(--bg)', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
             </div>
             <div className="grid grid-cols-2 gap-3 mb-4">
               <div>
                 <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>Valor (R$)</label>
                 <input type="number" value={saidaVal} onChange={e => setSaidaVal(e.target.value)} placeholder="0,00"
                   className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-                  style={{ background: '#000', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
+                  style={{ background: 'var(--bg)', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
               </div>
               <div>
                 <label className="font-barlow text-xs font-bold tracking-wider uppercase block mb-1" style={{ color: '#777' }}>Data</label>
                 <input type="date" value={saidaData} onChange={e => setSaidaData(e.target.value)}
                   className="w-full rounded-xl px-4 py-3 text-sm outline-none"
-                  style={{ background: '#000', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
+                  style={{ background: 'var(--bg)', border: '1px solid var(--borda)', color: 'var(--texto)' }} />
               </div>
             </div>
             <div className="flex gap-3">

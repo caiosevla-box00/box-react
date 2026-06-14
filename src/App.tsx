@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useStore } from '@/store'
 import { useSync } from '@/hooks/useSync'
 import { Loading } from '@/components/ui/Loading'
@@ -14,41 +14,43 @@ import { Config } from '@/components/tabs/Config'
 import { Diluidor } from '@/components/tabs/Diluidor'
 import { Checkout } from '@/components/modals/Checkout'
 import type { FechamentoDados } from '@/types'
-import { gerarId, formatarDataBR, dataStrParaDate, getISOWeek, hoje } from '@/lib/utils'
 
 export default function App() {
-  const { activeTab, loading, setTab, clientes, setClientes, agendamentos, setAgendamentos, showToast } = useStore()
+  const { activeTab, loading, setTab, clientes, showToast } = useStore()
   const { checkAPI } = useSync()
-
+  const [headerH, setHeaderH] = useState(130)
   const [checkoutOpen, setCheckoutOpen] = useState(false)
   const [checkoutSvcs, setCheckoutSvcs] = useState<string[]>([])
   const [checkoutTotal, setCheckoutTotal] = useState(0)
   const [seletorOpen, setSeletorOpen] = useState(false)
   const [seletorBusca, setSeletorBusca] = useState('')
-  const [checkoutDados, setCheckoutDados] = useState<FechamentoDados | null>(null)
 
   useEffect(() => { checkAPI() }, [])
 
+  // Measure header height after render
+  useEffect(() => {
+    const measure = () => {
+      const el = document.getElementById('app-header')
+      if (el) setHeaderH(el.offsetHeight + 8)
+    }
+    measure()
+    window.addEventListener('resize', measure)
+    // Also measure after fonts load
+    setTimeout(measure, 500)
+    return () => window.removeEventListener('resize', measure)
+  }, [loading])
+
   function handleOrcamentoFechar(svcs: string[], total: number) {
-    setCheckoutSvcs(svcs)
-    setCheckoutTotal(total)
-    setCheckoutOpen(true)
+    setCheckoutSvcs(svcs); setCheckoutTotal(total); setCheckoutOpen(true)
+  }
+  function handleCheckoutConfirmar(_d: FechamentoDados) {
+    setCheckoutOpen(false); setSeletorOpen(true); setSeletorBusca('')
+  }
+  function handleClienteSelecionado(_id: string) {
+    setSeletorOpen(false); setTab('agenda'); showToast('✅ Selecione data e horário!')
   }
 
-  function handleCheckoutConfirmar(dados: FechamentoDados) {
-    setCheckoutDados(dados)
-    setCheckoutOpen(false)
-    setSeletorOpen(true)
-    setSeletorBusca('')
-  }
-
-  function handleClienteSelecionado(clienteId: string) {
-    setSeletorOpen(false)
-    setTab('agenda')
-    showToast('✅ Selecione data e horário!')
-  }
-
-  const clientesFiltrados = seletorBusca
+  const clientesFil = seletorBusca
     ? clientes.filter(c => c.nome?.toLowerCase().includes(seletorBusca.toLowerCase()) || (c.tel || '').includes(seletorBusca))
     : clientes
 
@@ -66,18 +68,19 @@ export default function App() {
     }
   }
 
-  // Header height: logo row ~52px + tab row ~56px = 108px
-  const HEADER_H = 108
-
   return (
-    <div style={{ maxWidth: '500px', margin: '0 auto', minHeight: '100vh', background: 'var(--preto)', position: 'relative' }}>
+    <div style={{ maxWidth: '500px', margin: '0 auto', minHeight: '100vh', background: 'var(--bg)' }}>
       <Loading />
       <Toast />
-
       {!loading && (
         <>
           <Header />
-          <main style={{ paddingTop: `${HEADER_H}px`, paddingBottom: '24px', paddingLeft: '16px', paddingRight: '16px', minHeight: '100vh' }}>
+          <main style={{
+            paddingTop: `${headerH}px`,
+            paddingBottom: '40px',
+            paddingLeft: '16px',
+            paddingRight: '16px',
+          }}>
             <div className="animate-fadeUp" key={activeTab}>
               {renderTab()}
             </div>
@@ -85,34 +88,25 @@ export default function App() {
         </>
       )}
 
-      {/* Checkout do orçamento */}
       {checkoutOpen && (
-        <Checkout
-          valorInicial={checkoutTotal}
-          svcsTexto={checkoutSvcs.join(' + ')}
-          onConfirmar={handleCheckoutConfirmar}
-          onCancelar={() => setCheckoutOpen(false)}
-        />
+        <Checkout valorInicial={checkoutTotal} svcsTexto={checkoutSvcs.join(' + ')}
+          onConfirmar={handleCheckoutConfirmar} onCancelar={() => setCheckoutOpen(false)} />
       )}
 
-      {/* Seletor de cliente */}
       {seletorOpen && (
-        <div style={{ position: 'fixed', inset: 0, zIndex: 10003, background: 'var(--preto)', overflowY: 'auto' }}>
+        <div style={{ position: 'fixed', inset: 0, zIndex: 10003, background: 'var(--bg)', overflowY: 'auto' }}>
           <div style={{ maxWidth: '500px', margin: '0 auto', padding: '20px 16px 40px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-              <div style={{ fontSize: '18px', fontWeight: 700 }}>Selecionar Cliente</div>
-              <button onClick={() => setSeletorOpen(false)} style={{ background: '#1c1c1c', border: '1px solid #333', color: '#ccc', padding: '8px 14px', borderRadius: '10px', cursor: 'pointer' }}>✕</button>
+              <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--texto)' }}>Selecionar Cliente</div>
+              <button onClick={() => setSeletorOpen(false)} style={{ background: 'var(--surface)', border: '1px solid var(--borda)', color: 'var(--texto)', padding: '8px 14px', borderRadius: '10px', cursor: 'pointer' }}>✕</button>
             </div>
-            <input value={seletorBusca} onChange={e => setSeletorBusca(e.target.value)}
-              placeholder="Buscar cliente..."
-              style={{ width: '100%', background: 'var(--card)', border: '1px solid var(--borda)', borderRadius: '12px', padding: '12px 16px', color: 'var(--texto)', marginBottom: '12px', outline: 'none' }} />
-            {clientesFiltrados.map(c => (
+            <input value={seletorBusca} onChange={e => setSeletorBusca(e.target.value)} placeholder="Buscar cliente..."
+              style={{ width: '100%', background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: '12px', padding: '12px 16px', color: 'var(--texto)', marginBottom: '12px', outline: 'none' }} />
+            {clientesFil.map(c => (
               <button key={c.id} onClick={() => handleClienteSelecionado(c.id)}
-                style={{ width: '100%', textAlign: 'left', background: 'var(--card)', border: '1px solid var(--borda)', borderRadius: '14px', padding: '14px', marginBottom: '8px', cursor: 'pointer', color: 'var(--texto)' }}>
+                style={{ width: '100%', textAlign: 'left', background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: '14px', padding: '14px', marginBottom: '8px', cursor: 'pointer', color: 'var(--texto)' }}>
                 <div style={{ fontSize: '15px', fontWeight: 600 }}>{c.nome}</div>
-                <div style={{ fontSize: '12px', color: 'var(--dim)', marginTop: '3px' }}>
-                  {c.tel}{c.marca ? ` · ${c.marca} ${c.modelo || ''}` : ''}
-                </div>
+                <div style={{ fontSize: '12px', color: 'var(--dim)', marginTop: '3px' }}>{c.tel}{c.marca ? ` · ${c.marca} ${c.modelo || ''}` : ''}</div>
               </button>
             ))}
           </div>
