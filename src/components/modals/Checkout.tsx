@@ -1,6 +1,10 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useStore } from '@/store'
 import type { FechamentoDados } from '@/types'
+
+const TIPOS_V: Record<string, string> = {
+  hatch: '🚗', sedan: '🚙', suv: '🛻'
+}
 
 interface CheckoutProps {
   valorInicial: number
@@ -16,10 +20,18 @@ type FormaPagto = 'pix' | 'debito' | 'credito'
 const TAXAS_CREDITO = [0, 3.49, 4.49, 5.49, 5.99, 6.49, 6.99, 7.49, 7.99, 8.49, 8.99, 9.49, 9.99]
 
 export function Checkout({ valorInicial, svcsTexto, svcIds = [], cliente, onConfirmar, onCancelar }: CheckoutProps) {
-  const { divisao, taxaDebito } = useStore()
+  const { divisao, taxaDebito, clientes } = useStore()
   const [forma, setForma] = useState<FormaPagto>('pix')
   const [parcelas, setParcelas] = useState(1)
   const [taxaManual, setTaxaManual] = useState<number | ''>('')
+  const [nomeCliente, setNomeCliente] = useState(cliente?.nome || '')
+  const [veiculoCliente, setVeiculoCliente] = useState(cliente?.veiculo || '')
+  const [buscaCliente, setBuscaCliente] = useState('')
+  const [showBusca, setShowBusca] = useState(!cliente?.nome)
+
+  const clientesFil = buscaCliente
+    ? clientes.filter(c => c.nome?.toLowerCase().includes(buscaCliente.toLowerCase()))
+    : clientes.slice(0, 5)
 
   const taxa = taxaManual !== '' ? Number(taxaManual)
     : forma === 'pix' ? 0
@@ -63,6 +75,62 @@ export function Checkout({ valorInicial, svcsTexto, svcIds = [], cliente, onConf
           <div className="font-bebas text-2xl tracking-widest" style={{ color: 'var(--verde)' }}>FECHAR SERVIÇO</div>
           <button onClick={onCancelar} className="px-4 py-2 rounded-lg font-barlow text-sm font-bold"
             style={{ background: '#1c1c1c', border: '1px solid #333', color: '#ccc' }}>✕</button>
+        </div>
+
+        {/* Cliente */}
+        <div style={{ background: 'var(--surface)', border: '1px solid var(--borda)', borderRadius: 'var(--radius-md)', padding: '14px', marginBottom: '14px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--dim)', letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '8px' }}>
+            Cliente
+          </div>
+          {!showBusca ? (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <div style={{ fontSize: '15px', fontWeight: 600, color: 'var(--texto)' }}>{nomeCliente}</div>
+                {veiculoCliente && <div style={{ fontSize: '12px', color: 'var(--dim)', marginTop: '2px' }}>{veiculoCliente}</div>}
+              </div>
+              <button onClick={() => setShowBusca(true)}
+                style={{ fontSize: '12px', color: 'var(--verde)', background: 'transparent', border: 'none', cursor: 'pointer', fontWeight: 600 }}>
+                Trocar
+              </button>
+            </div>
+          ) : (
+            <div>
+              <input value={buscaCliente} onChange={e => setBuscaCliente(e.target.value)}
+                placeholder="Buscar cliente ou digitar nome..."
+                style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--borda)', borderRadius: '10px', padding: '10px 14px', color: 'var(--texto)', outline: 'none', marginBottom: '8px' }} />
+              {/* Sugestões de clientes cadastrados */}
+              {clientesFil.length > 0 && (
+                <div style={{ background: 'var(--bg)', border: '1px solid var(--borda)', borderRadius: '10px', overflow: 'hidden', marginBottom: '8px' }}>
+                  {clientesFil.map(c => {
+                    const veiculo = [c.marca, c.modelo].filter(Boolean).join(' ')
+                    return (
+                      <button key={c.id} onClick={() => {
+                        setNomeCliente(c.nome)
+                        setVeiculoCliente([TIPOS_V[c.tipoVeiculo||'']||'', veiculo].filter(Boolean).join(' '))
+                        setBuscaCliente('')
+                        setShowBusca(false)
+                      }}
+                        style={{ width: '100%', textAlign: 'left', padding: '10px 14px', background: 'transparent', border: 'none', borderBottom: '1px solid var(--borda)', cursor: 'pointer', color: 'var(--texto)' }}>
+                        <div style={{ fontSize: '14px', fontWeight: 600 }}>{c.nome}</div>
+                        {veiculo && <div style={{ fontSize: '11px', color: 'var(--dim)' }}>{veiculo}</div>}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+              {/* Digitar nome manualmente */}
+              <button onClick={() => {
+                if (buscaCliente.trim()) {
+                  setNomeCliente(buscaCliente.trim())
+                  setBuscaCliente('')
+                  setShowBusca(false)
+                }
+              }}
+                style={{ width: '100%', padding: '10px', borderRadius: '10px', background: 'var(--verde-bg)', border: '1px solid var(--verde)', color: 'var(--verde)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>
+                {buscaCliente ? `Usar "${buscaCliente}"` : 'Pular (sem cliente)'}
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Valor */}
@@ -171,7 +239,7 @@ export function Checkout({ valorInicial, svcsTexto, svcIds = [], cliente, onConf
           <button onClick={async () => {
             const { gerarOrcamentoPDF } = await import('@/lib/orcamentoPDF')
             gerarOrcamentoPDF({
-              cliente,
+              cliente: nomeCliente ? { nome: nomeCliente, veiculo: veiculoCliente } : undefined,
               svcIds: svcIds.length > 0 ? svcIds : [],
               total: valorInicial,
               formaPagamento: forma,
