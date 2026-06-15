@@ -15,7 +15,7 @@ export interface OrcamentoPDFDados {
 // Processo de trabalho — valor percebido
 const PROCESSO = [
   { num: '01', titulo: 'Avaliação', desc: 'Inspecionamos cada detalhe do seu veículo antes de começar.' },
-  { num: '02', titulo: 'Execução', desc: 'Produtos profissionais Vonixx e técnicas certificadas em cada etapa.' },
+  { num: '02', titulo: 'Execução', desc: 'Produtos profissionais e técnicas certificadas em cada etapa.' },
   { num: '03', titulo: 'Inspeção final', desc: 'Revisamos tudo antes de entregar — só liberamos quando está perfeito.' },
   { num: '04', titulo: 'Entrega', desc: 'Seu carro de volta impecável, com orientações para manter o resultado.' },
 ]
@@ -79,13 +79,13 @@ export async function gerarOrcamentoPDF(dados: OrcamentoPDFDados): Promise<void>
   // ─── SAUDAÇÃO ──────────────────────────────────────────
   const primeiroNome = dados.cliente?.nome?.split(' ')[0] || 'Cliente'
   setFont('bold', 16, PRETO)
-  text(`Olá, ${primeiroNome}! 👋`, M, y)
+  text(`Olá, ${primeiroNome}!`, M, y)
   y += 7
 
   setFont('normal', 10, CINZA3)
   const saudacao = doc.splitTextToSize(
     `Preparei esse orçamento especialmente para o seu veículo${dados.cliente?.veiculo ? ` — ${dados.cliente.veiculo}` : ''}. ` +
-    `Cada serviço é executado com produtos profissionais Vonixx e técnica dedicada. ` +
+    `Cada serviço é executado com produtos profissionais e técnica dedicada. ` +
     `Fique à vontade para tirar qualquer dúvida antes de confirmar.`,
     C
   )
@@ -109,7 +109,7 @@ export async function gerarOrcamentoPDF(dados: OrcamentoPDFDados): Promise<void>
 
     // Card background
     doc.setFillColor(...CINZA1)
-    const descLines = doc.splitTextToSize(svc.desc.replace(/·/g, '•'), C - 30)
+    const descLines = doc.splitTextToSize(svc.desc.replace(/·/g, '-').replace(/•/g, '-'), C - 30)
     const cardH = 10 + descLines.length * 4.5 + 4
     doc.roundedRect(M, y, C, cardH, 2, 2, 'F')
 
@@ -123,7 +123,7 @@ export async function gerarOrcamentoPDF(dados: OrcamentoPDFDados): Promise<void>
 
     // Tempo
     setFont('normal', 8, CINZA2)
-    text(`⏱ ${svc.tempo}`, M + 8, y + 12)
+    text(`Duracao: ${svc.tempo}`, M + 8, y + 12)
 
     // Preço
     setFont('bold', 13, VERDE)
@@ -231,7 +231,7 @@ export async function gerarOrcamentoPDF(dados: OrcamentoPDFDados): Promise<void>
   doc.roundedRect(M, y, C, 28, 3, 3, 'S')
 
   setFont('bold', 12, PRETO)
-  text('Pronto para agendar? 🚗', M + 6, y + 9)
+  text('Pronto para agendar?', M + 6, y + 9)
   setFont('normal', 9, CINZA3)
   const ctaLines = doc.splitTextToSize(
     'Responda esse orçamento confirmando os serviços ou me chame no WhatsApp. ' +
