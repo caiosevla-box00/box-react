@@ -228,13 +228,29 @@ export function Orcamento({ onFechar }: Props) {
               </div>
               <div style={{ fontSize: '28px', fontWeight: 800, color: 'var(--verde)', lineHeight: 1 }}>R${total}</div>
             </div>
-            {(descontoN > 0 || (delivery && taxaDelFinal > 0)) && (
-              <div style={{ textAlign: 'right', fontSize: '11px', color: 'var(--dim)' }}>
-                <div>Serviços: R${subtotal}</div>
-                {delivery && taxaDelFinal > 0 && <div>Delivery: +R${taxaDelFinal}</div>}
-                {descontoN > 0 && <div style={{ color: 'var(--erro)' }}>Desconto: -R${descontoN}</div>}
-              </div>
-            )}
+            <div style={{ textAlign: 'right' }}>
+              {(descontoN > 0 || (delivery && taxaDelFinal > 0)) && (
+                <div style={{ fontSize: '11px', color: 'var(--dim)', marginBottom: '4px' }}>
+                  <div>Serviços: R${subtotal}</div>
+                  {delivery && taxaDelFinal > 0 && <div>Delivery: +R${taxaDelFinal}</div>}
+                  {descontoN > 0 && <div style={{ color: 'var(--erro)' }}>Desconto: -R${descontoN}</div>}
+                </div>
+              )}
+              {/* Botão Limpar */}
+              <button onClick={() => {
+                setSel(new Set())
+                setDelivery(false)
+                setKm('')
+                setTaxaDelCustom('')
+                setDesconto('')
+              }} style={{
+                background: 'transparent', border: '1px solid var(--borda)',
+                borderRadius: '8px', padding: '5px 12px', fontSize: '12px',
+                fontWeight: 600, color: 'var(--dim)', cursor: 'pointer',
+              }}>
+                🗑 Limpar
+              </button>
+            </div>
           </div>
           <button onClick={() => onFechar(
             Array.from(sel).map(id => {
