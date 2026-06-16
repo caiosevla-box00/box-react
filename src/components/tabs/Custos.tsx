@@ -3,7 +3,7 @@ import { useStore } from '@/store'
 import { apiCall } from '@/lib/api'
 
 export function Custos() {
-  const { showToast } = useStore()
+  const { showToast, setCustoPorKm } = useStore()
   const [gas, setGas] = useState('7')
   const [cons, setCons] = useState('11')
   const [manut, setManut] = useState('300')
@@ -34,6 +34,7 @@ export function Custos() {
       custo_gas: gas, custo_cons: cons, custo_manut: manut,
       custo_kmes: kmes, custo_agua: agua, custo_luz: luz, custo_atend: atend
     }
+    setCustoPorKm(custoPorKm)
     const r = await apiCall('salvarConfig', { config })
     showToast(r.ok ? '☁️ Custos salvos!' : '💾 Salvo local')
   }

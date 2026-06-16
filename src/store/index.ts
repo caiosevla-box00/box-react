@@ -32,6 +32,8 @@ interface AppState {
   meta: number
   taxaDebito: number
   taxaCredito: number[]
+  custoPorKm: number
+  servicosCustom: { id: string; nome: string; tempo: string; desc: string; hatch: number; sedan: number; suv: number; categoria: string }[]
 
   // Veiculo selecionado
   veiculo: TipoVeiculo
@@ -51,6 +53,8 @@ interface AppState {
   setFinCache: (d: any[]) => void
   setDivisao: (d: AppState['divisao']) => void
   setMeta: (m: number) => void
+  setCustoPorKm: (v: number) => void
+  setServicosCustom: (s: AppState['servicosCustom']) => void
 }
 
 export const useStore = create<AppState>()(
@@ -71,6 +75,8 @@ export const useStore = create<AppState>()(
       meta: 0,
       taxaDebito: 1.5,
       taxaCredito: [0, 3.49, 4.49, 5.49, 5.99, 6.49, 6.99, 7.49, 7.99, 8.49, 8.99, 9.49, 9.99],
+      custoPorKm: 0,
+      servicosCustom: [],
       veiculo: 'hatch',
 
       setTab: (tab) => set({ activeTab: tab }),
@@ -87,6 +93,8 @@ export const useStore = create<AppState>()(
       setFinCache: (d) => set({ finCache: d }),
       setDivisao: (d) => set({ divisao: d }),
       setMeta: (m) => set({ meta: m }),
+      setCustoPorKm: (v) => set({ custoPorKm: v }),
+      setServicosCustom: (s) => set({ servicosCustom: s }),
     }),
     {
       name: 'box00-store-v1',
@@ -101,6 +109,8 @@ export const useStore = create<AppState>()(
         taxaDebito: state.taxaDebito,
         taxaCredito: state.taxaCredito,
         veiculo: state.veiculo,
+        custoPorKm: state.custoPorKm,
+        servicosCustom: state.servicosCustom,
       }),
     }
   )
