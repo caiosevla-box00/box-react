@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { useStore } from '@/store'
 import { parseValor, formatarDataBR, getMesAtual, diasDesde, dataISO } from '@/lib/utils'
+import type { TabId } from '@/types'
 
 function saudacao(): string {
   const h = new Date().getHours()
