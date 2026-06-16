@@ -41,9 +41,13 @@ export default function App() {
   }, [loading])
 
   const [checkoutSvcIds, setCheckoutSvcIds] = useState<string[]>([])
+  const [checkoutDelivery, setCheckoutDelivery] = useState(0)
+  const [checkoutDesconto, setCheckoutDesconto] = useState(0)
 
-  function handleOrcamentoFechar(svcs: string[], total: number, svcIds: string[]) {
-    setCheckoutSvcs(svcs); setCheckoutTotal(total); setCheckoutSvcIds(svcIds); setCheckoutOpen(true)
+  function handleOrcamentoFechar(svcs: string[], total: number, svcIds: string[], delivery = 0, desconto = 0) {
+    setCheckoutSvcs(svcs); setCheckoutTotal(total); setCheckoutSvcIds(svcIds)
+    setCheckoutDelivery(delivery); setCheckoutDesconto(desconto)
+    setCheckoutOpen(true)
   }
   function handleCheckoutConfirmar(_d: FechamentoDados) {
     setCheckoutOpen(false); setSeletorOpen(true); setSeletorBusca('')
@@ -92,7 +96,7 @@ export default function App() {
 
       {checkoutOpen && (
         <Checkout valorInicial={checkoutTotal} svcsTexto={checkoutSvcs.join(' + ')}
-          svcIds={checkoutSvcIds}
+          svcIds={checkoutSvcIds} delivery={checkoutDelivery} desconto={checkoutDesconto}
           onConfirmar={handleCheckoutConfirmar} onCancelar={() => setCheckoutOpen(false)} />
       )}
 

@@ -10,6 +10,8 @@ interface CheckoutProps {
   valorInicial: number
   svcsTexto: string
   svcIds?: string[]
+  delivery?: number
+  desconto?: number
   cliente?: { nome: string; veiculo?: string; tel?: string }
   onConfirmar: (dados: FechamentoDados) => void
   onCancelar: () => void
@@ -19,7 +21,7 @@ type FormaPagto = 'pix' | 'debito' | 'credito'
 
 const TAXAS_CREDITO = [0, 3.49, 4.49, 5.49, 5.99, 6.49, 6.99, 7.49, 7.99, 8.49, 8.99, 9.49, 9.99]
 
-export function Checkout({ valorInicial, svcsTexto, svcIds = [], cliente, onConfirmar, onCancelar }: CheckoutProps) {
+export function Checkout({ valorInicial, svcsTexto, svcIds = [], delivery = 0, desconto = 0, cliente, onConfirmar, onCancelar }: CheckoutProps) {
   const { divisao, taxaDebito, clientes } = useStore()
   const [forma, setForma] = useState<FormaPagto>('pix')
   const [parcelas, setParcelas] = useState(1)
@@ -242,6 +244,8 @@ export function Checkout({ valorInicial, svcsTexto, svcIds = [], cliente, onConf
               cliente: nomeCliente ? { nome: nomeCliente, veiculo: veiculoCliente } : undefined,
               svcIds: svcIds.length > 0 ? svcIds : [],
               total: valorInicial,
+              delivery,
+              desconto,
               formaPagamento: forma,
               parcelas,
               valorCobrado,
