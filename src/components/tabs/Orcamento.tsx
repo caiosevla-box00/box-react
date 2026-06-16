@@ -135,45 +135,63 @@ export function Orcamento({ onFechar }: Props) {
 
           {delivery && (
             <div style={{ marginTop: '14px' }}>
-              {/* KM */}
-              <div style={{ marginBottom: '10px' }}>
-                <label style={{ fontSize: '11px', color: 'var(--dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '6px' }}>
-                  Distância (km)
-                </label>
-                <input
-                  type="number" value={km} onChange={e => { setKm(e.target.value === '' ? '' : Number(e.target.value)); setTaxaDelCustom('') }}
-                  placeholder="0"
-                  style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--borda)', borderRadius: '10px', padding: '10px 14px', color: 'var(--texto)', fontSize: '18px', fontWeight: 700, outline: 'none', textAlign: 'center' }}
-                />
-              </div>
+              {/* KM input */}
+              <label style={{ fontSize: '11px', color: 'var(--dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '6px' }}>
+                Distância em km
+              </label>
+              <input
+                type="number" value={km}
+                onChange={e => {
+                  const v = e.target.value === '' ? '' : Number(e.target.value)
+                  setKm(v)
+                  setTaxaDelCustom('') // reset override quando km muda
+                }}
+                placeholder="Ex: 8"
+                style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--borda)', borderRadius: '10px', padding: '12px 14px', color: 'var(--texto)', fontSize: '24px', fontWeight: 700, outline: 'none', textAlign: 'center', marginBottom: '10px' }}
+              />
 
-              {/* Cálculo automático */}
-              {kmN > 0 && custoPorKm > 0 && (
-                <div style={{ background: 'var(--bg)', borderRadius: '10px', padding: '10px 14px', marginBottom: '10px', fontSize: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                    <span style={{ color: 'var(--dim)' }}>Custo real ({kmN}km × R${custoPorKm.toFixed(2)})</span>
-                    <span style={{ color: 'var(--dim)' }}>R${custoReal.toFixed(2)}</span>
-                  </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--verde)', fontWeight: 600 }}>Sugerido (+50% margem)</span>
-                    <span style={{ color: 'var(--verde)', fontWeight: 700 }}>R${taxaDelSugerida}</span>
-                  </div>
+              {/* Cálculo ao vivo — aparece assim que km > 0 */}
+              {kmN > 0 && (
+                <div style={{ background: 'var(--bg)', borderRadius: '12px', padding: '12px 14px', marginBottom: '10px' }}>
+                  {custoPorKm > 0 ? (
+                    <>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--dim)' }}>
+                          Custo real ({kmN} km × R${custoPorKm.toFixed(2)})
+                        </span>
+                        <span style={{ fontSize: '12px', color: 'var(--dim)' }}>R${custoReal.toFixed(2)}</span>
+                      </div>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--verde)' }}>
+                          Cobrar do cliente (+50%)
+                        </span>
+                        <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--verde)' }}>
+                          R${taxaDelSugerida}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '10px', color: 'var(--dim)', marginTop: '4px' }}>
+                        Sua margem: R${(taxaDelSugerida - custoReal).toFixed(2)}
+                      </div>
+                    </>
+                  ) : (
+                    <div style={{ fontSize: '12px', color: 'var(--alerta)' }}>
+                      ⚠️ Configure o custo/km em Custos para cálculo automático
+                    </div>
+                  )}
                 </div>
               )}
 
-              {/* Valor cobrado */}
-              <div>
-                <label style={{ fontSize: '11px', color: 'var(--dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '6px' }}>
-                  Valor cobrado do cliente {kmN > 0 && custoPorKm > 0 ? '(ajuste se quiser)' : ''}
-                </label>
-                <input
-                  type="number"
-                  value={taxaDelCustom !== '' ? taxaDelCustom : (kmN > 0 && custoPorKm > 0 ? taxaDelSugerida : '')}
-                  onChange={e => setTaxaDelCustom(e.target.value === '' ? '' : Number(e.target.value))}
-                  placeholder="R$"
-                  style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--verde)', borderRadius: '10px', padding: '10px 14px', color: 'var(--verde)', fontSize: '20px', fontWeight: 700, outline: 'none', textAlign: 'center' }}
-                />
-              </div>
+              {/* Override do valor — pré-preenchido automaticamente */}
+              <label style={{ fontSize: '11px', color: 'var(--dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '6px' }}>
+                Ajustar valor cobrado
+              </label>
+              <input
+                type="number"
+                value={taxaDelCustom !== '' ? taxaDelCustom : (taxaDelSugerida > 0 ? taxaDelSugerida : '')}
+                onChange={e => setTaxaDelCustom(e.target.value === '' ? '' : Number(e.target.value))}
+                placeholder={custoPorKm > 0 ? `Sugerido: R$${taxaDelSugerida}` : 'R$'}
+                style={{ width: '100%', background: 'var(--bg)', border: '2px solid var(--verde)', borderRadius: '10px', padding: '12px 14px', color: 'var(--verde)', fontSize: '22px', fontWeight: 700, outline: 'none', textAlign: 'center' }}
+              />
             </div>
           )}
         </div>

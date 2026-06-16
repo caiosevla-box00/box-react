@@ -79,7 +79,7 @@ export interface Combo {
   tag: string
 }
 
-export type TabId = 'orcamento' | 'combos' | 'agenda' | 'clientes' | 'financeiro' | 'custos' | 'config' | 'diluidor'
+export type TabId = 'home' | 'orcamento' | 'combos' | 'agenda' | 'clientes' | 'financeiro' | 'custos' | 'config' | 'diluidor'
 
 export type TipoVeiculo = 'hatch' | 'sedan' | 'suv'
 

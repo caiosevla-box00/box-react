@@ -60,7 +60,7 @@ interface AppState {
 export const useStore = create<AppState>()(
   persist(
     (set) => ({
-      activeTab: 'orcamento',
+      activeTab: 'home' as TabId,
       apiOnline: false,
       loading: true,
       loadingStep: 'Iniciando...',
