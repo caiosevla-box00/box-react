@@ -75,8 +75,11 @@ export async function gerarOrcamentoPDF(dados: OrcamentoPDFDados): Promise<void>
   y += 7
 
   setFont('normal', 10, CINZA3)
+  const veiculoTexto = dados.cliente?.veiculo
+    ? dados.cliente.veiculo.replace(/[🚗🚙🛻]/g, '').trim()
+    : ''
   const saudacao = doc.splitTextToSize(
-    `Preparei esse orcamento especialmente para o seu veiculo${dados.cliente?.veiculo ? ` - ${dados.cliente.veiculo}` : ''}. ` +
+    `Preparei esse orcamento especialmente para o seu veiculo${veiculoTexto ? ` - ${veiculoTexto}` : ''}. ` +
     `Cada servico e executado com produtos profissionais e tecnica dedicada. ` +
     `Fique a vontade para tirar qualquer duvida antes de confirmar.`,
     C
@@ -247,25 +250,16 @@ export async function gerarOrcamentoPDF(dados: OrcamentoPDFDados): Promise<void>
 
   // Crédito
   doc.setFillColor(...CINZA1)
-  doc.roundedRect(M, y, C, 18, 3, 3, 'F')
+  doc.roundedRect(M, y, C, 14, 3, 3, 'F')
   setFont('bold', 10, PRETO)
-  text('CREDITO', M + 6, y + 7)
+  text('CREDITO', M + 6, y + 5)
   setFont('normal', 8, CINZA3)
-  text('Mastercard, Visa, Elo, American Express', M + 30, y + 7)
-  // Bandeiras simuladas com texto
-  const bandeiras = ['Visa', 'Master', 'Elo', 'Amex']
-  bandeiras.forEach((b, i) => {
-    const bx = M + 6 + i * 24
-    doc.setFillColor(...PRETO)
-    doc.roundedRect(bx, y + 10, 20, 6, 1, 1, 'F')
-    setFont('bold', 6, BRANCO)
-    text(b, bx + 10, y + 14, { align: 'center' })
-  })
+  text('Mastercard, Visa, Elo, American Express', M + 30, y + 5)
   setFont('bold', 9, [180,120,0])
-  text('Taxa consulte', W - M - 4, y + 7, { align: 'right' })
+  text('Taxa consulte', W - M - 4, y + 5, { align: 'right' })
   setFont('normal', 8, CINZA3)
-  text('Parcelamento em ate 12x - taxas variam por parcela', M + 6, y + 16)
-  y += 24
+  text('Parcelamento em ate 12x - taxas variam por parcela', M + 6, y + 11)
+  y += 18
 
   // ─── CTA ────────────────────────────────────────────────
   if (y > 240) { doc.addPage(); y = 20 }
