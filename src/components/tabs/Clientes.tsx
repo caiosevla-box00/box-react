@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useStore } from '@/store'
 import { apiCall } from '@/lib/api'
 import { hoje, formatarDataBR, gerarId, diasDesde } from '@/lib/utils'
@@ -256,7 +256,7 @@ export function Clientes() {
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '6px' }}>
                 {Object.entries(TIPOS_V).map(([k, v]) => (
                   <button key={k} onClick={() => setForm(p => ({ ...p, tipoVeiculo: k }))}
-                    style={{ padding: '10px 4px', borderRadius: 'var(--radius-sm)', fontSize: '12px', fontWeight: 600, border: `1px solid ${form.tipoVeiculo === k ? 'var(--verde)' : 'var(--borda)'}`, background: form.tipoVeiculo === k ? 'var(--verde-bg)' : 'var(--card)', color: form.tipoVeiculo === k ? 'var(--verde)' : 'var(--dim)', cursor: 'pointer' }}>
+                    style={{ padding: '10px 4px', borderRadius: 'var(--radius-sm)', fontSize: '12px', fontWeight: 600, border: `1px solid ${form.tipoVeiculo === k ? 'var(--verde)' : 'var(--borda)'}`, background: form.tipoVeiculo === k ? 'var(--verde-bg)' : 'var(--surface)', color: form.tipoVeiculo === k ? 'var(--verde)' : 'var(--dim)', cursor: 'pointer' }}>
                     {v}
                   </button>
                 ))}

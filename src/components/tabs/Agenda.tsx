@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import React, { useState } from 'react'
 import { useStore } from '@/store'
 import { apiCall } from '@/lib/api'
 import { hoje, dataISO, formatarDataBR, dataStrParaDate, gerarId, getISOWeek, primeiroNome, parseValor } from '@/lib/utils'
@@ -213,9 +213,9 @@ export function Agenda() {
     <div>
       {/* Week nav */}
       <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:12 }}>
-        <button onClick={()=>setOffset(o=>o-1)} style={{ background:'var(--card)', border:'none', color:'#fff', fontSize:16, width:34, height:34, borderRadius:10, cursor:'pointer' }}>‹</button>
+        <button onClick={()=>setOffset(o=>o-1)} style={{ background:'var(--surface)', border:'none', color:'#fff', fontSize:16, width:34, height:34, borderRadius:10, cursor:'pointer' }}>‹</button>
         <span style={{ fontSize:13, fontWeight:600, color:'var(--dim)' }}>{days[0].getDate()}/{String(days[0].getMonth()+1).padStart(2,'0')} — {days[6].getDate()}/{String(days[6].getMonth()+1).padStart(2,'0')}</span>
-        <button onClick={()=>setOffset(o=>o+1)} style={{ background:'var(--card)', border:'none', color:'#fff', fontSize:16, width:34, height:34, borderRadius:10, cursor:'pointer' }}>›</button>
+        <button onClick={()=>setOffset(o=>o+1)} style={{ background:'var(--surface)', border:'none', color:'#fff', fontSize:16, width:34, height:34, borderRadius:10, cursor:'pointer' }}>›</button>
       </div>
 
       {/* Day strip */}
@@ -226,7 +226,7 @@ export function Agenda() {
           return (
             <div key={iso} onClick={()=>setSelDay(iso)} style={{
               flexShrink:0, width:44, padding:'8px 2px', borderRadius:12, textAlign:'center', cursor:'pointer',
-              background: isSel ? 'var(--verde)' : isToday ? 'var(--verde-bg2)' : 'var(--card)',
+              background: isSel ? 'var(--verde)' : isToday ? 'var(--verde-bg)' : 'var(--surface)',
               border: isToday&&!isSel ? '1px solid var(--verde)' : '1px solid transparent',
               transition:'all .15s'
             }}>
@@ -258,11 +258,11 @@ export function Agenda() {
         const cor=COR[status]||'var(--verde)'
         const fim=minSlot(slotMin(ag.hora)+ag.duracao)
         return (
-          <div key={ag.id} style={{ background:'var(--card)', borderRadius:14, padding:14, marginBottom:8, borderLeft:`3px solid ${cor}` }}>
+          <div key={ag.id} style={{ background:'var(--surface)', borderRadius:14, padding:14, marginBottom:8, borderLeft:`3px solid ${cor}` }}>
             <div style={{ fontSize:12, color:cor, fontWeight:600 }}>{ag.hora} — {fim}</div>
             <div style={{ fontSize:15, fontWeight:600, marginTop:3 }}>{primeiroNome(c?.nome)||'Cliente'}</div>
             <div style={{ fontSize:13, color:'var(--dim)', marginTop:2 }}>{ag.servico}</div>
-            {ag.obs && <div style={{ fontSize:12, color:'var(--dim2)', marginTop:3 }}>{ag.obs}</div>}
+            {ag.obs && <div style={{ fontSize:12, color:'var(--dim)', marginTop:3 }}>{ag.obs}</div>}
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginTop:10 }}>
               <span style={{ fontSize:11, fontWeight:600, padding:'4px 10px', borderRadius:20, background:`${cor}18`, color:cor }}>{BADGE[status]||status}</span>
               <div style={{ display:'flex', gap:6, alignItems:'center' }}>
@@ -284,7 +284,7 @@ export function Agenda() {
             const livre=!ocupados.has(slot)
             return (
               <button key={slot} onClick={()=>{ if(!livre) return; setAgData(selDay); setAgHora(slot); setAgClienteId(clientes[0]?.id||''); setAgSvcId(SERVICOS[0].id); setAgObs(''); setAgValor(0); setModalAg(true) }}
-                style={{ padding:'7px 2px', borderRadius:8, fontSize:11, fontWeight:600, textAlign:'center', background:livre?'var(--verde-bg2)':'#111', border:`1px solid ${livre?'rgba(170,255,0,.3)':'#1a1a1a'}`, color:livre?'var(--verde)':'#2a2a2a', cursor:livre?'pointer':'not-allowed' }}>
+                style={{ padding:'7px 2px', borderRadius:8, fontSize:11, fontWeight:600, textAlign:'center', background:livre?'var(--verde-bg)':'#111', border:`1px solid ${livre?'rgba(170,255,0,.3)':'#1a1a1a'}`, color:livre?'var(--verde)':'#2a2a2a', cursor:livre?'pointer':'not-allowed' }}>
                 {slot}
               </button>
             )
@@ -294,15 +294,15 @@ export function Agenda() {
 
       {/* Modal Agendar */}
       {modalAg && (
-        <div style={{ position:'fixed', inset:0, zIndex:10000, background:'#0a0a0a', overflowY:'auto' }}>
+        <div style={{ position:'fixed', inset:0, zIndex:10000, background:'var(--bg)', overflowY:'auto' }}>
           <div style={{ maxWidth:500, margin:'0 auto', padding:'16px 16px 60px' }}>
             <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:20 }}>
               <div style={{ fontSize:18, fontWeight:800 }}>NOVO AGENDAMENTO</div>
               <button onClick={()=>setModalAg(false)} style={{ background:'#1a1a1a', border:'none', color:'#ccc', padding:'8px 14px', borderRadius:10, cursor:'pointer' }}>✕</button>
             </div>
             {[
-              { label:'Cliente', el: <select value={agClienteId} onChange={e=>setAgClienteId(e.target.value)} style={{ width:'100%', background:'var(--card)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none' }}>{clientes.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}</select> },
-              { label:'Serviço', el: <select value={agSvcId} onChange={e=>setAgSvcId(e.target.value)} style={{ width:'100%', background:'var(--card)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none' }}>{SERVICOS.map(s=><option key={s.id} value={s.id}>{s.nome}</option>)}</select> },
+              { label:'Cliente', el: <select value={agClienteId} onChange={e=>setAgClienteId(e.target.value)} style={{ width:'100%', background:'var(--surface)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none' }}>{clientes.map(c=><option key={c.id} value={c.id}>{c.nome}</option>)}</select> },
+              { label:'Serviço', el: <select value={agSvcId} onChange={e=>setAgSvcId(e.target.value)} style={{ width:'100%', background:'var(--surface)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none' }}>{SERVICOS.map(s=><option key={s.id} value={s.id}>{s.nome}</option>)}</select> },
             ].map(f=>(
               <div key={f.label} style={{ marginBottom:12 }}>
                 <div style={{ fontSize:11, color:'var(--dim)', fontWeight:600, letterSpacing:1, textTransform:'uppercase', marginBottom:6 }}>{f.label}</div>
@@ -312,20 +312,20 @@ export function Agenda() {
             <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:10, marginBottom:12 }}>
               <div>
                 <div style={{ fontSize:11, color:'var(--dim)', fontWeight:600, letterSpacing:1, textTransform:'uppercase', marginBottom:6 }}>Data</div>
-                <input type="date" value={agData} onChange={e=>setAgData(e.target.value)} style={{ width:'100%', background:'var(--card)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none' }}/>
+                <input type="date" value={agData} onChange={e=>setAgData(e.target.value)} style={{ width:'100%', background:'var(--surface)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none' }}/>
               </div>
               <div>
                 <div style={{ fontSize:11, color:'var(--dim)', fontWeight:600, letterSpacing:1, textTransform:'uppercase', marginBottom:6 }}>Horário</div>
-                <input type="time" value={agHora} onChange={e=>setAgHora(e.target.value)} step="1800" style={{ width:'100%', background:'var(--card)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none' }}/>
+                <input type="time" value={agHora} onChange={e=>setAgHora(e.target.value)} step="1800" style={{ width:'100%', background:'var(--surface)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none' }}/>
               </div>
             </div>
             <div style={{ marginBottom:12 }}>
               <div style={{ fontSize:11, color:'var(--dim)', fontWeight:600, letterSpacing:1, textTransform:'uppercase', marginBottom:6 }}>Valor acordado (R$)</div>
-              <input type="number" value={agValor||''} onChange={e=>setAgValor(Number(e.target.value))} placeholder="0" style={{ width:'100%', background:'var(--card)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none' }}/>
+              <input type="number" value={agValor||''} onChange={e=>setAgValor(Number(e.target.value))} placeholder="0" style={{ width:'100%', background:'var(--surface)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none' }}/>
             </div>
             <div style={{ marginBottom:20 }}>
               <div style={{ fontSize:11, color:'var(--dim)', fontWeight:600, letterSpacing:1, textTransform:'uppercase', marginBottom:6 }}>Observações</div>
-              <input type="text" value={agObs} onChange={e=>setAgObs(e.target.value)} placeholder="Opcional..." style={{ width:'100%', background:'var(--card)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none' }}/>
+              <input type="text" value={agObs} onChange={e=>setAgObs(e.target.value)} placeholder="Opcional..." style={{ width:'100%', background:'var(--surface)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none' }}/>
             </div>
             <button onClick={confirmarAg} style={{ width:'100%', background:'var(--verde)', color:'#000', fontSize:15, fontWeight:700, padding:15, borderRadius:14, border:'none', cursor:'pointer', letterSpacing:1 }}>CONFIRMAR</button>
           </div>
@@ -335,10 +335,10 @@ export function Agenda() {
       {/* Modal Encerrar */}
       {modalEnc && (
         <div style={{ position:'fixed', inset:0, zIndex:10001, background:'rgba(0,0,0,.8)', display:'flex', alignItems:'flex-end', justifyContent:'center' }}>
-          <div style={{ width:'100%', maxWidth:500, background:'#111', borderRadius:'20px 20px 0 0', padding:'24px 20px 40px' }}>
+          <div style={{ width:'100%', maxWidth:500, background:'var(--surface2)', borderRadius:'20px 20px 0 0', padding:'24px 20px 40px' }}>
             <div style={{ fontSize:18, fontWeight:800, color:'var(--verde)', marginBottom:16 }}>ENCERRAR SERVIÇO</div>
             <div style={{ fontSize:11, color:'var(--dim)', fontWeight:600, letterSpacing:1, textTransform:'uppercase', marginBottom:6 }}>Observação (opcional)</div>
-            <input type="text" value={encObs} onChange={e=>setEncObs(e.target.value)} placeholder="Ex: Cliente satisfeito..." style={{ width:'100%', background:'#000', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none', marginBottom:16 }}/>
+            <input type="text" value={encObs} onChange={e=>setEncObs(e.target.value)} placeholder="Ex: Cliente satisfeito..." style={{ width:'100%', background:'var(--bg)', border:'1px solid var(--borda)', borderRadius:12, padding:'12px 14px', color:'#fff', fontSize:14, outline:'none', marginBottom:16 }}/>
             <div style={{ display:'flex', gap:10 }}>
               <button onClick={()=>setModalEnc(null)} style={{ flex:1, padding:13, borderRadius:12, border:'1px solid #333', background:'transparent', color:'#777', cursor:'pointer', fontWeight:600 }}>Cancelar</button>
               <button onClick={confirmarEnc} style={{ flex:2, padding:13, borderRadius:12, background:'var(--verde)', color:'#000', border:'none', cursor:'pointer', fontWeight:700, fontSize:14, letterSpacing:1 }}>ENCERRAR</button>

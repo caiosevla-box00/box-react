@@ -52,11 +52,11 @@ export default function App() {
     setAcaoOpen(true)
   }
 
-  async function handlePDF() {
+  async function handlePDF(clienteNome?: string, clienteVeiculo?: string) {
     const { gerarOrcamentoPDF } = await import('@/lib/orcamentoPDF')
     const { servicosCustom } = useStore.getState()
-    const { veiculo } = useStore.getState()
     gerarOrcamentoPDF({
+      cliente: clienteNome ? { nome: clienteNome, veiculo: clienteVeiculo } : undefined,
       svcIds: acaoSvcIds,
       servicosCustom,
       veiculo: acaoVeiculo,
