@@ -3,7 +3,7 @@ import { useStore } from '@/store'
 import { SERVICOS, CATEGORIAS } from '@/lib/servicos'
 import type { TipoVeiculo } from '@/types'
 
-interface Props { onFechar: (svcs: string[], total: number, svcIds: string[], delivery?: number, desconto?: number) => void }
+interface Props { onFechar: (svcs: string[], total: number, svcIds: string[], delivery?: number, desconto?: number, veiculo?: 'hatch'|'sedan'|'suv') => void }
 
 const V: { id: TipoVeiculo; icon: string; label: string }[] = [
   { id: 'hatch', icon: '🚗', label: 'Hatch' },
@@ -259,7 +259,8 @@ export function Orcamento({ onFechar }: Props) {
             }),
             total, Array.from(sel),
             delivery ? taxaDelFinal : 0,
-            descontoN
+            descontoN,
+            veiculo
           )}
             style={{ width: '100%', background: 'var(--verde)', color: '#000', fontSize: '15px', fontWeight: 700, padding: '15px', borderRadius: 'var(--radius-md)', border: 'none', cursor: 'pointer', letterSpacing: '1px' }}>
             FECHAR SERVIÇO →

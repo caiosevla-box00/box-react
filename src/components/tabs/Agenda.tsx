@@ -4,7 +4,107 @@ import { apiCall } from '@/lib/api'
 import { hoje, dataISO, formatarDataBR, dataStrParaDate, gerarId, getISOWeek, primeiroNome, parseValor } from '@/lib/utils'
 import { SERVICOS, TEMPO_SERVICO, HORA_INICIO, HORA_FIM, SLOT_MIN } from '@/lib/servicos'
 import type { Agendamento, FechamentoDados } from '@/types'
-import { Checkout } from '@/components/modals/Checkout'
+
+const TAXAS_CREDITO = [0,3.49,4.49,5.49,5.99,6.49,6.99,7.49,7.99,8.49,8.99,9.49,9.99]
+
+function CobrancaModal({ ag, valor, onConfirmar, onCancelar }: {
+  ag: Agendamento; valor: number;
+  onConfirmar: (d: FechamentoDados) => void
+  onCancelar: () => void
+}) {
+  const { divisao, taxaDebito } = useStore()
+  const [forma, setForma] = useState<'pix'|'debito'|'credito'>('pix')
+  const [parcelas, setParcelas] = useState(1)
+  const [taxaM, setTaxaM] = useState<number|''>('')
+
+  const taxa = taxaM !== '' ? Number(taxaM) : forma==='pix' ? 0 : forma==='debito' ? taxaDebito : (TAXAS_CREDITO[parcelas]||0)
+  const valorCobrado = taxa > 0 ? Math.ceil(valor / (1 - taxa/100)) : valor
+  const custoTaxa = valorCobrado - valor
+
+  function confirmar() {
+    onConfirmar({
+      svcs: ag.servico, formaPagamento: forma, parcelas: forma==='credito'?parcelas:1,
+      taxaPct: taxa, valorOriginal: valor, valorCobrado, custoTaxa, liquido: valor,
+      divisao: {
+        contas: parseFloat((valor*divisao.contas/100).toFixed(2)),
+        maquinas: parseFloat((valor*divisao.maquinas/100).toFixed(2)),
+        estoque: parseFloat((valor*divisao.estoque/100).toFixed(2)),
+        lucro: parseFloat((valor*divisao.lucro/100).toFixed(2)),
+      }
+    })
+  }
+
+  const S = { background:'var(--surface2)', borderRadius:'20px 20px 0 0', padding:'20px 18px 40px', width:'100%', maxWidth:'500px' }
+  const inp = { background:'var(--bg)', border:'1px solid var(--borda)', borderRadius:10, padding:'9px 12px', color:'var(--texto)', outline:'none', width:'100%', fontSize:'15px' } as React.CSSProperties
+
+  return (
+    <div style={{ position:'fixed', inset:0, zIndex:10002, background:'rgba(0,0,0,.8)', display:'flex', alignItems:'flex-end', justifyContent:'center' }}
+      onClick={e => e.target===e.currentTarget && onCancelar()}>
+      <div style={S}>
+        <div style={{ fontSize:16, fontWeight:700, marginBottom:4 }}>Registrar Pagamento</div>
+        <div style={{ fontSize:13, color:'var(--dim)', marginBottom:16 }}>{ag.servico}</div>
+
+        {/* Valor */}
+        <div style={{ background:'var(--verde-bg)', border:'1px solid var(--verde)', borderRadius:12, padding:12, marginBottom:16, display:'flex', justifyContent:'space-between', alignItems:'center' }}>
+          <span style={{ fontSize:13, color:'var(--dim)' }}>Valor acordado</span>
+          <span style={{ fontSize:26, fontWeight:800, color:'var(--verde)' }}>R${valor.toFixed(0)}</span>
+        </div>
+
+        {/* Forma */}
+        <div style={{ fontSize:11, color:'var(--dim)', fontWeight:600, letterSpacing:1, textTransform:'uppercase', marginBottom:8 }}>Forma de pagamento</div>
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr 1fr', gap:6, marginBottom:14 }}>
+          {(['pix','debito','credito'] as const).map(f => (
+            <button key={f} onClick={() => { setForma(f); setParcelas(1); setTaxaM('') }} style={{
+              padding:'10px 4px', borderRadius:10, fontSize:12, fontWeight:600, border:'none', cursor:'pointer',
+              background: forma===f ? 'var(--verde)' : 'var(--surface)',
+              color: forma===f ? '#000' : 'var(--dim)',
+              outline: forma===f ? 'none' : '1px solid var(--borda)',
+            }}>
+              {f==='pix'?'⚡ PIX':f==='debito'?'💳 Débito':'💳 Crédito'}
+              <div style={{ fontSize:9, marginTop:2, opacity:.8 }}>
+                {f==='pix'?'sem taxa':f==='debito'?`${taxaDebito}%`:`${TAXAS_CREDITO[1]}%+`}
+              </div>
+            </button>
+          ))}
+        </div>
+
+        {forma==='credito' && (
+          <div style={{ marginBottom:14 }}>
+            <div style={{ fontSize:11, color:'var(--dim)', fontWeight:600, letterSpacing:1, textTransform:'uppercase', marginBottom:6 }}>Parcelas</div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(6,1fr)', gap:4 }}>
+              {[1,2,3,4,5,6,7,8,9,10,11,12].map(p => (
+                <button key={p} onClick={() => setParcelas(p)} style={{ padding:'6px 2px', borderRadius:8, fontSize:11, fontWeight:600, border:'none', cursor:'pointer', background:parcelas===p?'var(--verde)':'var(--surface)', color:parcelas===p?'#000':'var(--dim)', outline:parcelas===p?'none':'1px solid var(--borda)' }}>
+                  {p}x
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Resumo */}
+        {taxa > 0 && (
+          <div style={{ background:'var(--bg)', borderRadius:10, padding:10, marginBottom:14, fontSize:12 }}>
+            <div style={{ display:'flex', justifyContent:'space-between', marginBottom:4 }}>
+              <span style={{ color:'var(--dim)' }}>Taxa ({taxa.toFixed(2)}%)</span>
+              <span style={{ color:'var(--erro)' }}>+R${custoTaxa.toFixed(2)}</span>
+            </div>
+            <div style={{ display:'flex', justifyContent:'space-between' }}>
+              <span style={{ color:'var(--dim)', fontWeight:600 }}>Cobrar do cliente</span>
+              <span style={{ color:'var(--alerta)', fontWeight:700, fontSize:15 }}>R${valorCobrado.toFixed(2)}</span>
+            </div>
+          </div>
+        )}
+
+        <div style={{ display:'flex', gap:10 }}>
+          <button onClick={onCancelar} style={{ flex:1, padding:13, borderRadius:12, border:'1px solid var(--borda)', background:'transparent', color:'var(--dim)', cursor:'pointer', fontWeight:600 }}>Cancelar</button>
+          <button onClick={confirmar} style={{ flex:2, padding:13, borderRadius:12, background:'var(--verde)', color:'#000', border:'none', cursor:'pointer', fontWeight:700, fontSize:14 }}>
+            ✅ CONFIRMAR PAGAMENTO
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 const DIAS_SEMANA = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb']
 const DIAS_FULL   = ['Domingo','Segunda','Terça','Quarta','Quinta','Sexta','Sábado']
@@ -247,9 +347,20 @@ export function Agenda() {
         </div>
       )}
 
-      {checkoutId && agendamentos.find(a=>a.id===checkoutId) && (
-        <Checkout valorInicial={parseValor(agendamentos.find(a=>a.id===checkoutId)!.valorAcordado)} svcsTexto={agendamentos.find(a=>a.id===checkoutId)!.servico} onConfirmar={handleCobrar} onCancelar={()=>setCheckoutId(null)}/>
-      )}
+      {/* Modal Cobrar — forma de pagamento */}
+      {checkoutId && (() => {
+        const ag = agendamentos.find(a => a.id === checkoutId)
+        if (!ag) return null
+        const valor = parseValor(ag.valorAcordado)
+        return (
+          <CobrancaModal
+            ag={ag}
+            valor={valor}
+            onConfirmar={handleCobrar}
+            onCancelar={() => setCheckoutId(null)}
+          />
+        )
+      })()}
 
       {/* WhatsApp confirmation — direct click, sem setTimeout */}
       {wppPendente && (
