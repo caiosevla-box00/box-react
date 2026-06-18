@@ -357,10 +357,14 @@ export function AcaoOrcamento({ svcs, svcIds, total, delivery, desconto, veiculo
                 const h = 8 + Math.floor(min/60)
                 const m = min % 60
                 const slot = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`
-                const ocupado = agendamentos.some(a =>
-                  (String(a.data||'').trim() === agData || String(a.data||'').trim() === formatarDataBR(agData)) &&
-                  a.hora === slot && a.status !== 'cancelado'
-                )
+                const ocupado = agendamentos.some(a => {
+                  const d = String(a.data||'').trim()
+                  let norm = d
+                  if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) {
+                    const [dd,mm,yy] = d.split('/'); norm = `${yy}-${mm}-${dd}`
+                  }
+                  return norm === agData && a.hora === slot && a.status !== 'cancelado'
+                })
                 const sel = agHora === slot
                 return (
                   <button key={slot} onClick={() => !ocupado && setAgHora(slot)} style={{

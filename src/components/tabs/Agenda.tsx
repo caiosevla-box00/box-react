@@ -137,16 +137,34 @@ export function Agenda() {
 
   const days = getWeekDays(offset)
 
+  // Compara data do agendamento com uma data no formato yyyy-mm-dd
+  // Aceita qualquer formato no agendamento
+  function mesmoDia(agData: string | undefined, iso: string): boolean {
+    const d = String(agData || '').trim()
+    if (!d) return false
+    // Normaliza para yyyy-mm-dd
+    let norm = d
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) {
+      const [dd, mm, yy] = d.split('/')
+      norm = `${yy}-${mm}-${dd}`
+    }
+    return norm === iso
+  }
+
   function getOcupados(iso: string) {
-    const s=new Set<string>()
-    agendamentos.filter(a=>String(a.data||'').trim()===iso||String(a.data||'').trim()===formatarDataBR(iso))
-      .forEach(ag=>{ const ini=slotMin(ag.hora); for(let i=0;i<Math.ceil(ag.duracao/SLOT_MIN);i++) s.add(minSlot(ini+i*SLOT_MIN)) })
+    const s = new Set<string>()
+    agendamentos
+      .filter(a => mesmoDia(a.data, iso))
+      .forEach(ag => {
+        const ini = slotMin(ag.hora)
+        for (let i = 0; i < Math.ceil(ag.duracao / SLOT_MIN); i++) s.add(minSlot(ini + i * SLOT_MIN))
+      })
     return s
   }
 
   const selAgs = agendamentos
-    .filter(a => String(a.data||'').trim()===selDay || String(a.data||'').trim()===formatarDataBR(selDay))
-    .sort((a,b) => a.hora.localeCompare(b.hora))
+    .filter(a => mesmoDia(a.data, selDay) && a.status !== 'cancelado')
+    .sort((a, b) => a.hora.localeCompare(b.hora))
   const ocupados = getOcupados(selDay)
 
   async function confirmarAg() {
@@ -222,7 +240,7 @@ export function Agenda() {
       <div style={{ display:'flex', gap:4, marginBottom:16, overflowX:'auto' }}>
         {days.map(d => {
           const iso=dataISO(d); const isToday=dataISO(new Date())===iso; const isSel=selDay===iso
-          const hasAg=agendamentos.some(a=>String(a.data||'').trim()===iso||String(a.data||'').trim()===formatarDataBR(iso))
+          const hasAg = agendamentos.some(a => mesmoDia(a.data, iso) && a.status !== 'cancelado')
           return (
             <div key={iso} onClick={()=>setSelDay(iso)} style={{
               flexShrink:0, width:44, padding:'8px 2px', borderRadius:12, textAlign:'center', cursor:'pointer',

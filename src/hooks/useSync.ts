@@ -46,10 +46,32 @@ export function useSync() {
 
     if (!bgMode) setLoadingStep('Sincronizando agenda...', 75)
 
-    // 3. Agendamentos
+    // 3. Agendamentos — normaliza data para yyyy-mm-dd sempre
     const rAgs = await apiCall<Agendamento[]>('getAgendamentos')
     if (rAgs.ok && rAgs.data) {
-      setAgendamentos(rAgs.data)
+      const agsNorm = rAgs.data.map((a: any) => {
+        const raw = String(a.data || '').trim()
+        // Converte dd/mm/yyyy → yyyy-mm-dd
+        let dataISO = raw
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+          const [d, m, y] = raw.split('/')
+          dataISO = `${y}-${m}-${d}`
+        } else if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+          dataISO = raw // já correto
+        } else {
+          // Tenta parse genérico
+          const dt = new Date(raw)
+          if (!isNaN(dt.getTime())) {
+            dataISO = dt.toISOString().slice(0, 10)
+          }
+        }
+        return {
+          ...a,
+          data: dataISO,
+          valorAcordado: parseValor(a.valorAcordado),
+        }
+      })
+      setAgendamentos(agsNorm)
     }
 
     // 4. Financeiro cache

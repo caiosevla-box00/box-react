@@ -31,7 +31,13 @@ export function Home() {
     agendamentos
       .filter(a => {
         const d = String(a.data || '').trim()
-        return d === hoje || d === formatarDataBR(hoje)
+        // Normaliza para yyyy-mm-dd para comparar com hoje
+        let norm = d
+        if (/^\d{2}\/\d{2}\/\d{4}$/.test(d)) {
+          const [dd, mm, yy] = d.split('/')
+          norm = `${yy}-${mm}-${dd}`
+        }
+        return norm === hoje && a.status !== 'cancelado'
       })
       .sort((a, b) => a.hora.localeCompare(b.hora)),
     [agendamentos, hoje]
