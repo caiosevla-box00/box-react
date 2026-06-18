@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useStore } from '@/store'
 import { useSync } from '@/hooks/useSync'
+import { BuscaGlobal } from '@/components/ui/BuscaGlobal'
 
 export function Header() {
   const { apiOnline } = useStore()
@@ -42,6 +43,8 @@ export function Header() {
         <div style={{ fontSize: '11px', fontWeight: 600, color: apiOnline ? 'var(--verde)' : 'var(--dim)' }}>
           {apiOnline ? '● Online' : '● Offline'}
         </div>
+        {/* Busca */}
+        <BuscaGlobal />
         {/* Tema */}
         <button onClick={() => setDark(d => !d)} style={{
           background: 'var(--surface)', border: '0.5px solid var(--borda)',
