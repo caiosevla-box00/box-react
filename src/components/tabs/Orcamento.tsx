@@ -17,11 +17,16 @@ export function Orcamento({ onFechar }: Props) {
   const [delivery, setDelivery] = useState(false)
   const [km, setKm] = useState<number | ''>('')
   const [taxaDelCustom, setTaxaDelCustom] = useState<number | ''>('')
+  const [pedagio, setPedagio] = useState<number | ''>('')
+  const [alimentacao, setAlimentacao] = useState<number | ''>('')
   const [desconto, setDesconto] = useState<number | ''>('')
 
   const kmN = Number(km) || 0
+  const pedagioN = Number(pedagio) || 0
+  const alimentacaoN = Number(alimentacao) || 0
   const custoReal = custoPorKm * kmN
-  const taxaDelSugerida = Math.ceil(custoReal * 1.5)
+  const custoDeslocamento = Math.ceil(custoReal * 1.5) // +50% só no km
+  const taxaDelSugerida = custoDeslocamento + pedagioN + alimentacaoN // pedagio e alimentacao sem margem
   const taxaDelFinal = taxaDelCustom !== '' ? Number(taxaDelCustom) : taxaDelSugerida
   const descontoN = Number(desconto) || 0
 
@@ -157,20 +162,35 @@ export function Orcamento({ onFechar }: Props) {
                     <>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
                         <span style={{ fontSize: '12px', color: 'var(--dim)' }}>
-                          Custo real ({kmN} km × R${custoPorKm.toFixed(2)})
+                          Deslocamento ({kmN} km × R${custoPorKm.toFixed(2)})
                         </span>
                         <span style={{ fontSize: '12px', color: 'var(--dim)' }}>R${custoReal.toFixed(2)}</span>
                       </div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: pedagioN > 0 || alimentacaoN > 0 ? '6px' : '0' }}>
+                        <span style={{ fontSize: '12px', color: 'var(--dim)' }}>
+                          Deslocamento +50% margem
+                        </span>
+                        <span style={{ fontSize: '12px', color: 'var(--dim)' }}>R${custoDeslocamento}</span>
+                      </div>
+                      {pedagioN > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                          <span style={{ fontSize: '12px', color: 'var(--dim)' }}>Pedágio (valor exato)</span>
+                          <span style={{ fontSize: '12px', color: 'var(--dim)' }}>R${pedagioN.toFixed(2)}</span>
+                        </div>
+                      )}
+                      {alimentacaoN > 0 && (
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                          <span style={{ fontSize: '12px', color: 'var(--dim)' }}>Alimentação (valor exato)</span>
+                          <span style={{ fontSize: '12px', color: 'var(--dim)' }}>R${alimentacaoN.toFixed(2)}</span>
+                        </div>
+                      )}
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid var(--borda)', paddingTop: '6px', marginTop: '4px' }}>
                         <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--verde)' }}>
-                          Cobrar do cliente (+50%)
+                          Total delivery sugerido
                         </span>
                         <span style={{ fontSize: '18px', fontWeight: 700, color: 'var(--verde)' }}>
                           R${taxaDelSugerida}
                         </span>
-                      </div>
-                      <div style={{ fontSize: '10px', color: 'var(--dim)', marginTop: '4px' }}>
-                        Sua margem: R${(taxaDelSugerida - custoReal).toFixed(2)}
                       </div>
                     </>
                   ) : (
@@ -180,6 +200,28 @@ export function Orcamento({ onFechar }: Props) {
                   )}
                 </div>
               )}
+
+              {/* Pedágio */}
+              <label style={{ fontSize: '11px', color: 'var(--dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '6px' }}>
+                Pedágio (R$)
+              </label>
+              <input
+                type="number" value={pedagio}
+                onChange={e => { setPedagio(e.target.value === '' ? '' : Number(e.target.value)); setTaxaDelCustom('') }}
+                placeholder="0"
+                style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--borda)', borderRadius: '10px', padding: '10px 14px', color: 'var(--texto)', fontSize: '18px', fontWeight: 700, outline: 'none', textAlign: 'center', marginBottom: '10px' }}
+              />
+
+              {/* Alimentação */}
+              <label style={{ fontSize: '11px', color: 'var(--dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '6px' }}>
+                Alimentação (R$)
+              </label>
+              <input
+                type="number" value={alimentacao}
+                onChange={e => { setAlimentacao(e.target.value === '' ? '' : Number(e.target.value)); setTaxaDelCustom('') }}
+                placeholder="0"
+                style={{ width: '100%', background: 'var(--bg)', border: '1px solid var(--borda)', borderRadius: '10px', padding: '10px 14px', color: 'var(--texto)', fontSize: '18px', fontWeight: 700, outline: 'none', textAlign: 'center', marginBottom: '10px' }}
+              />
 
               {/* Override do valor — pré-preenchido automaticamente */}
               <label style={{ fontSize: '11px', color: 'var(--dim)', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px', display: 'block', marginBottom: '6px' }}>
@@ -242,6 +284,8 @@ export function Orcamento({ onFechar }: Props) {
                 setDelivery(false)
                 setKm('')
                 setTaxaDelCustom('')
+                setPedagio('')
+                setAlimentacao('')
                 setDesconto('')
               }} style={{
                 background: 'transparent', border: '1px solid var(--borda)',
